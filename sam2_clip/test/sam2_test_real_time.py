@@ -26,7 +26,7 @@ def redraw_points():
 cv2.namedWindow("SAM Interactive")
 cv2.setMouseCallback("SAM Interactive", click_event)
 
-model = SAM("SAM_models/sam2.1_b.pt")
+model = SAM("../SAM_models/sam2.1_b.pt")
 model.info()
 
 print("左键点击添加点，按 'f' 分割，按 'r' 重置，按 'z' 撤销上一个点，按 'q' 退出。")
