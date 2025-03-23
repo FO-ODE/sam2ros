@@ -1,9 +1,12 @@
-#!/usr/bin/python3
-############################ use global env
+# use sam-env
+
 import cv2
 from ultralytics import SAM
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 
-img_path = "workers.jpg"
+img_path = "../test_images/goods.png"
 img = cv2.imread(img_path)
 display_img = img.copy()
 
@@ -26,7 +29,7 @@ def redraw_points():
 cv2.namedWindow("SAM Interactive")
 cv2.setMouseCallback("SAM Interactive", click_event)
 
-model = SAM("../SAM_models/sam2.1_b.pt")
+model = SAM("SAM_models/sam2.1_l.pt")
 model.info()
 
 print("左键点击添加点，按 'f' 分割，按 'r' 重置，按 'z' 撤销上一个点，按 'q' 退出。")

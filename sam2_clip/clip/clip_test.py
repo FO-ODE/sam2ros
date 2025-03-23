@@ -9,7 +9,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 model, preprocess = clip.load("ViT-B/32", device=device)
 
-image = preprocess(Image.open("workers.jpg")).unsqueeze(0).to(device)
+image = preprocess(Image.open("../test_images/workers.jpg")).unsqueeze(0).to(device)
 # text = clip.tokenize(["a diagram", "a dog", "a cat", "a person"]).to(device)
 
 text = clip.tokenize(["three man standing", "three woman sitting"]).to(device)
