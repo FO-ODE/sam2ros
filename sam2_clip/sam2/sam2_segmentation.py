@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # use global env
+
+# must run in the same terminal before running the script (done in the activate script of sam2-env)
+# export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libffi.so.7" 
+
 import rospy
 import cv2
 import numpy as np
