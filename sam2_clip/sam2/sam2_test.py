@@ -1,3 +1,4 @@
+# use sam2-env
 import os
 import torch
 from ultralytics import SAM
@@ -5,7 +6,7 @@ from ultralytics import SAM
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 torch.cuda.empty_cache()
 
-model = SAM("SAM_models/sam2.1_l.pt")
+model = SAM("SAM_models/sam2.1_b.pt")
 model.to('cuda:0')
 
 # stream=True need 遍历

@@ -1,4 +1,4 @@
-# use sam-env
+# use sam2-env
 
 import cv2
 from ultralytics import SAM

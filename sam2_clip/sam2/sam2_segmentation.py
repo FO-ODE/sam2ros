@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+# use global env
 import rospy
 import cv2
 import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from ultralytics import SAM
+from ultralytics import SAM 
 
 
 
@@ -26,12 +27,12 @@ class Sam2SegmentationNode:
 
         self.bridge = CvBridge()
 
-        rospy.loginfo("SAM2 分割节点已启动")
+        rospy.loginfo("SAM2 segmentation node has started!")
         rospy.spin()
 
     def image_callback(self, msg):
         try:
-            # 将 ROS Image 转换为 OpenCV 格式
+            # set ROS Image to OpenCV format
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
             segmented_image = process_with_sam2(input_image)
@@ -41,7 +42,7 @@ class Sam2SegmentationNode:
             cv2.waitKey(1)
 
         except Exception as e:
-            rospy.logerr(f"错误: {e}")
+            rospy.logerr(f"error: {e}")
 
 if __name__ == "__main__":
     Sam2SegmentationNode()
