@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # use sam2-env
 
 import cv2
@@ -12,7 +13,7 @@ display_img = img.copy()
 
 points = []
 
-# 鼠标点击事件
+# mouse callback click event
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         print(f"点击点: ({x}, {y})")
