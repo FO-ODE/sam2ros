@@ -3,5 +3,8 @@ devel
 logs
 .catkin_tools
 
-# 忽略 PyTorch 模型, SAM2
+# 忽略 SAM2 PyTorch 模型
 *.pt 
+
+# 忽略 LibreOffice 临时文件
+.~lock.Command_SAM.odt# 
