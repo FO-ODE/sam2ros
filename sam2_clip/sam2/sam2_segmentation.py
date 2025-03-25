@@ -31,7 +31,8 @@ class Sam2SegmentationNode:
         rospy.init_node("sam2_segmentation_node", anonymous=True)
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
-
+        self.image_pub = rospy.Publisher("/xtion/rgb/image_processed", Image, queue_size=1) # queue_size=10
+        
         self.bridge = CvBridge()
         
         rospy.loginfo("SAM2 segmentation node has started!")
@@ -44,9 +45,24 @@ class Sam2SegmentationNode:
 
             segmented_image = process_with_sam2(input_image)
 
-            cv2.imshow("Original Image", input_image)
-            cv2.imshow("Segmented Image", segmented_image)
+
+            # resize
+            h1, w1 = input_image.shape[:2]
+            h2, w2 = segmented_image.shape[:2]
+
+            if (h1, w1) != (h2, w2):
+                segmented_image = cv2.resize(segmented_image, (w1, h1))
+
+            combined_image = np.hstack((input_image, segmented_image))
+            
+            # cv2.imshow("Original Image", input_image)
+            # cv2.imshow("Segmented Image", segmented_image)
+            cv2.imshow("Original | Segmented", combined_image)
             cv2.waitKey(1)
+            
+            ros_image = self.bridge.cv2_to_imgmsg(segmented_image, "bgr8")  # 如果是灰度图像，改为 "mono8"
+            self.image_pub.publish(ros_image)
+
 
         except Exception as e:
             rospy.logerr(f"error: {e}")
