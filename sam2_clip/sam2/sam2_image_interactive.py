@@ -39,7 +39,7 @@ while True:
     cv2.imshow("SAM Interactive", display_img)
     key = cv2.waitKey(1) & 0xFF
 
-    if key == ord('f'):  # Enter 键
+    if key == ord('f'): # 分割
         if points:
             labels = [1] * len(points)
             print(f"开始分割，使用点: {points}")
@@ -50,7 +50,7 @@ while True:
             points.clear()
             print("分割完成，可以继续点击新点。")
         else:
-            print("未检测到点击点，请点击后再按 Enter。")
+            print("未检测到点击点，请点击后再按 f。")
 
     elif key == ord('r'):  # 重置
         print("重置图片和点。")

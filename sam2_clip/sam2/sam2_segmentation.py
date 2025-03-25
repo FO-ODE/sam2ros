@@ -11,9 +11,9 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from ultralytics import SAM 
 
-# 系统ROS Python路径
-import sys
-sys.path.append('/opt/ros/noetic/lib/python3/dist-packages') 
+# # 系统ROS Python路径
+# import sys
+# sys.path.append('/opt/ros/noetic/lib/python3/dist-packages') 
 
 
 def process_with_sam2(input_image):
@@ -33,7 +33,7 @@ class Sam2SegmentationNode:
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
 
         self.bridge = CvBridge()
-
+        
         rospy.loginfo("SAM2 segmentation node has started!")
         rospy.spin()
 
