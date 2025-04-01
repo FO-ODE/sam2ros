@@ -150,9 +150,12 @@ class Sam2SegmentationNode:
             h2, w2 = segmented_image.shape[:2]
             if (h1, w1) != (h2, w2):
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
+                
             combined_image = np.hstack((input_image, segmented_image))
             cv2.imshow("Original | Segmented", combined_image)
-
+            # cv2.imshow("Original Image", input_image)
+            # cv2.imshow("Segmented Image", segmented_image)
+            cv2.waitKey(1)
 
             # 原图作为 segment_id=0
             msg_original = SegmentMask()
