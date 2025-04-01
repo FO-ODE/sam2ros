@@ -53,7 +53,7 @@ def process_with_sam2(input_image):
     for i, mask in enumerate(masks):
         # 二值掩码 -> uint8 图像
         binary_mask = (mask * 255).astype(np.uint8)
-        # 用掩码裁剪目标
+        # 裁剪
         masked_img = cv2.bitwise_and(input_image, input_image, mask=binary_mask)
         
         # 可选：找出边界框裁剪区域
