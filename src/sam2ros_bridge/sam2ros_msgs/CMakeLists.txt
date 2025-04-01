@@ -10,6 +10,7 @@ project(sam2ros_msgs)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
+  sensor_msgs
   roscpp
   rospy
   std_msgs
@@ -51,7 +52,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  Carry.msg
+  TestMsg.msg
+  SegmentMask.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +74,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 ################################################

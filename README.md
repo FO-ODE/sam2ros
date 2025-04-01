@@ -12,6 +12,9 @@ export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libffi.so.7"
 nano /home/zby/anaconda3/envs/sam2-env/etc/conda/deactivate.d/env_vars.sh
 unset LD_PRELOAD
 
-
 ## pub segmented image
+
 when using RVIZ, use Image not Camera
+
+
+
