@@ -138,7 +138,6 @@ class Sam2SegmentationNode:
         self.mask_pub = rospy.Publisher("/sam2ros/mask_segment", SegmentMask, queue_size=1) # queue_size=10
 
         self.bridge = CvBridge()
-        self.segment_counter = 0 
         
         rospy.loginfo("SAM2 segmentation node has started!")
         rospy.loginfo(f"Using model: {self.model_name}")
@@ -170,6 +169,9 @@ class Sam2SegmentationNode:
             
 
             ######################################################## 发布分割结果
+            self.image_pub.publish(self.bridge.cv2_to_imgmsg(segmented_image, "bgr8"))
+            
+            
             # segment_id=0 原图 
             msg_segmented_image = SegmentMask()
             msg_segmented_image.header = msg.header

@@ -78,7 +78,7 @@ class MaskVisualizerNode:
 
             canvas[y + offset_y:y + offset_y + h, x + offset_x:x + offset_x + w] = crop_display
 
-        win_name = f"Segmented Crops (Frame ID: {self.current_frame_seq})"
+        win_name = f"Segmented Crops (Frame seq: {self.current_frame_seq})"
         cv2.imshow(win_name, canvas)
         cv2.waitKey(1)
 
