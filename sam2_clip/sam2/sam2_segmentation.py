@@ -131,7 +131,7 @@ class Sam2SegmentationNode:
         self.model = SAM(model_path)
         self.model.to('cuda:0')
         self.model_name = Path(model_path).stem
-        self.frame_id = 0
+        self.frame_seq = 0
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
         self.image_pub = rospy.Publisher("/xtion/rgb/mask_segment", Image, queue_size=1)  # for RVIZ
@@ -149,8 +149,8 @@ class Sam2SegmentationNode:
         try:
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             segmented_image, segments, time_used = process_with_sam2(input_image, self.model)
-            self.frame_id += 1
-            rospy.logwarn(f"[{self.model_name}], 当前帧为{self.frame_id}, 检测到 {len(segments)} 个目标, 消耗的时间为{time_used}[ms]。")
+            self.frame_seq += 1
+            rospy.logwarn(f"[{self.model_name}], 当前帧为{self.frame_seq}, 检测到 {len(segments)} 个目标, 消耗的时间为{time_used}[ms]。")
 
             # 拼接 原图 & 分割图 ==> combined_image
             h1, w1 = input_image.shape[:2]
@@ -158,29 +158,34 @@ class Sam2SegmentationNode:
             if (h1, w1) != (h2, w2):
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
-            combined_image = np.hstack((input_image, segmented_image))
-            # cv2.imshow("Original Image", input_image)
-            # cv2.imshow("Segmented Image", segmented_image)
-            cv2.imshow("Original | Segmented", combined_image)
-            cv2.waitKey(1)
-            display_with_subplots(segments) # slower, with matplotlib
-            # display_segmented_objects_grid(segments) # faster, with opencv
+            ######################################################## control the top-up fenster
+            # # cv2.imshow("Original Image", input_image)
+            # # cv2.imshow("Segmented Image", segmented_image)
+            # combined_image = np.hstack((input_image, segmented_image))
+            # cv2.imshow("Original | Segmented", combined_image)
+            # cv2.waitKey(1)
+            # display_with_subplots(segments) # slower, with matplotlib
+            # # display_segmented_objects_grid(segments) # faster, with opencv
+            ######################################################## control the top-up fenster
+            
 
-            # 原图作为 segment_id=0
-            msg_original = SegmentMask()
-            msg_original.header = msg.header
-            msg_original.mask_image = self.bridge.cv2_to_imgmsg(input_image, "bgr8")
-            msg_original.segment_id = 0
-            self.mask_pub.publish(msg_original)
+            ######################################################## 发布分割结果
+            # segment_id=0 原图 
+            msg_segmented_image = SegmentMask()
+            msg_segmented_image.header = msg.header
+            msg_segmented_image.mask_image = self.bridge.cv2_to_imgmsg(segmented_image, "bgr8")
+            msg_segmented_image.segment_id = 0
+            msg_segmented_image.frame_seq = self.frame_seq
+            self.mask_pub.publish(msg_segmented_image)
 
-            # 发布每个裁剪结果
-            for obj in segments:
-                segment_msg = SegmentMask()
-                segment_msg.header = msg.header
-                segment_msg.mask_image = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
-                segment_msg.segment_id = obj['id']
-                segment_msg.frame_id = self.frame_id
-                self.mask_pub.publish(segment_msg)
+            # 发布裁剪结果
+            # for obj in segments:
+            #     segment_msg = SegmentMask()
+            #     segment_msg.header = msg.header
+            #     # segment_msg.mask_image = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
+            #     segment_msg.segment_id = obj['id']
+            #     segment_msg.frame_seq = self.frame_seq
+            #     self.mask_pub.publish(segment_msg)
 
 
 

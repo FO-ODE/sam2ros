@@ -12,7 +12,8 @@ class MaskVisualizerNode:
         rospy.init_node('mask_visualizer_node', anonymous=True)
 
         self.bridge = CvBridge()
-        self.segments = {}  # 存储 segment_id -> 图像
+        self.current_frame_seq = None
+        self.current_segments = {}
 
         rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback)
         rospy.loginfo("Mask Visualizer Node started!")
@@ -21,7 +22,15 @@ class MaskVisualizerNode:
     def mask_callback(self, msg):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg.mask_image, "bgr8")
-            self.segments[msg.segment_id] = cv_image
+            frame_seq = msg.frame_seq
+
+            # 如果 frame_seq 变了，说明是新的一帧，清空旧内容
+            if self.current_frame_seq != frame_seq:
+                self.current_frame_seq = frame_seq
+                self.current_segments.clear()
+
+            self.current_segments[msg.segment_id] = cv_image
+
         except Exception as e:
             rospy.logerr(f"Failed to convert image: {e}")
 
@@ -32,11 +41,12 @@ class MaskVisualizerNode:
             rate.sleep()
 
     def display_segments(self):
-        if not self.segments:
+        if not self.current_segments:
             return
 
-        crops = [img for seg_id, img in sorted(self.segments.items()) if img is not None]
-        ids = [seg_id for seg_id in sorted(self.segments.keys())]
+        segments = self.current_segments
+        crops = [img for seg_id, img in sorted(segments.items()) if img is not None]
+        ids = [seg_id for seg_id in sorted(segments.keys())]
 
         max_cols = 5
         cols = min(max_cols, len(crops))
@@ -68,7 +78,8 @@ class MaskVisualizerNode:
 
             canvas[y + offset_y:y + offset_y + h, x + offset_x:x + offset_x + w] = crop_display
 
-        cv2.imshow("Received Segment Crops", canvas)
+        win_name = f"Segmented Crops (Frame ID: {self.current_frame_seq})"
+        cv2.imshow(win_name, canvas)
         cv2.waitKey(1)
 
 if __name__ == '__main__':
