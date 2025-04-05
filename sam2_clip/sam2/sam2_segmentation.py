@@ -13,7 +13,6 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge
 from ultralytics import SAM
 from pathlib import Path
-
 from sam2ros_msgs.msg import SegmentMask
 
 # # 系统ROS Python路径
@@ -24,17 +23,18 @@ from sam2ros_msgs.msg import SegmentMask
 def process_with_sam2(input_image, model):
 
     results = model(input_image)[0] # [0]: first image processed by SAM2
+    # print(type(results))       # <class 'ultralytics.engine.results.Results'>
     seg_vis = results.plot()
     masks = results.masks.data.cpu().numpy()  # shape: [N, H, W]
 
 
     objects = []
     for i, mask in enumerate(masks):
-        # 处理掩码
+
         binary_mask = (mask * 255).astype(np.uint8)
         masked_img = cv2.bitwise_and(input_image, input_image, mask=binary_mask)
         
-        # 仅保留掩码区域，否则mask为原图大小
+        # 仅保留掩码附近区域，否则mask为原图大小
         y_indices, x_indices = np.where(binary_mask > 0)
         if y_indices.size == 0 or x_indices.size == 0:
             continue
@@ -44,8 +44,8 @@ def process_with_sam2(input_image, model):
 
         objects.append({
             'id': i + 1,
-            'mask': binary_mask,
-            'crop': cropped 
+            'mask': binary_mask,    # binary
+            'crop': cropped         # color
         })
         
         
@@ -124,8 +124,8 @@ class Sam2SegmentationNode:
         model_path = "SAM_models/sam2.1_b.pt"
         self.model = SAM(model_path)
         self.model.to('cuda:0')
-        model_name = Path(model_path).stem
-
+        self.model_name = Path(model_path).stem
+        self.frame_number = 0
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
         self.image_pub = rospy.Publisher("/xtion/rgb/mask_segment", Image, queue_size=1)  # for RVIZ
@@ -135,26 +135,27 @@ class Sam2SegmentationNode:
         self.segment_counter = 0 
         
         rospy.loginfo("SAM2 segmentation node has started!")
-        rospy.loginfo(f"Using model: {model_name}")
+        rospy.loginfo(f"Using model: {self.model_name}")
         rospy.spin()
-
 
 
     def image_callback(self, msg):
         try:
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             segmented_image, segments = process_with_sam2(input_image, self.model)
-            
-            # 拼接原图 + 分割图（原始逻辑）
+            self.frame_number += 1
+            rospy.logwarn(f"[{self.model_name}], 当前帧为{self.frame_number}, 检测到 {len(segments)} 个目标。")
+
+            # 拼接 原图 & 分割图 ==> combined_image
             h1, w1 = input_image.shape[:2]
             h2, w2 = segmented_image.shape[:2]
             if (h1, w1) != (h2, w2):
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
             combined_image = np.hstack((input_image, segmented_image))
-            cv2.imshow("Original | Segmented", combined_image)
             # cv2.imshow("Original Image", input_image)
             # cv2.imshow("Segmented Image", segmented_image)
+            cv2.imshow("Original | Segmented", combined_image)
             cv2.waitKey(1)
 
             # 原图作为 segment_id=0
@@ -172,8 +173,8 @@ class Sam2SegmentationNode:
                 segment_msg.segment_id = obj['id']
                 self.mask_pub.publish(segment_msg)
 
-            display_with_subplots(segments)
-            # display_segmented_objects_grid(segments) # faster
+            display_with_subplots(segments) # slower, with matplotlib
+            # display_segmented_objects_grid(segments) # faster, with opencv
 
         except Exception as e:
             rospy.logerr(f"error: {e}")
