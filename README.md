@@ -16,5 +16,10 @@ unset LD_PRELOAD
 
 when using RVIZ, use Image not Camera
 
+## in clip-env
 
+<!-- nano /home/zby/anaconda3/envs/clip-env/etc/conda/activate.d/env_vars.sh
+export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libffi.so.7"
 
+nano /home/zby/anaconda3/envs/clip-env/etc/conda/deactivate.d/env_vars.sh
+unset LD_PRELOAD -->

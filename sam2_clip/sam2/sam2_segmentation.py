@@ -134,8 +134,8 @@ class Sam2SegmentationNode:
         self.frame_seq = 0
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
-        self.image_pub = rospy.Publisher("/xtion/rgb/mask_segment", Image, queue_size=1)  # for RVIZ
-        self.mask_pub = rospy.Publisher("/sam2ros/mask_segment", SegmentMask, queue_size=1) # queue_size=10
+        self.image_pub = rospy.Publisher("/xtion/rgb/mask_segment", Image, queue_size=10)  # for RVIZ
+        self.mask_pub = rospy.Publisher("/sam2ros/mask_segment", SegmentMask, queue_size=50) # if queue_size=1, cannot publish all messages
 
         self.bridge = CvBridge()
         
@@ -158,13 +158,13 @@ class Sam2SegmentationNode:
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
             ######################################################## control the top-up fenster
-            # # cv2.imshow("Original Image", input_image)
-            # # cv2.imshow("Segmented Image", segmented_image)
-            # combined_image = np.hstack((input_image, segmented_image))
-            # cv2.imshow("Original | Segmented", combined_image)
-            # cv2.waitKey(1)
-            # display_with_subplots(segments) # slower, with matplotlib
-            # # display_segmented_objects_grid(segments) # faster, with opencv
+            # cv2.imshow("Original Image", input_image)
+            # cv2.imshow("Segmented Image", segmented_image)
+            combined_image = np.hstack((input_image, segmented_image))
+            cv2.imshow("Original | Segmented", combined_image)
+            cv2.waitKey(1)
+            display_with_subplots(segments) # slower, with matplotlib
+            # display_segmented_objects_grid(segments) # faster, with opencv
             ######################################################## control the top-up fenster
             
 
@@ -181,13 +181,13 @@ class Sam2SegmentationNode:
             self.mask_pub.publish(msg_segmented_image)
 
             # 发布裁剪结果
-            # for obj in segments:
-            #     segment_msg = SegmentMask()
-            #     segment_msg.header = msg.header
-            #     # segment_msg.mask_image = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
-            #     segment_msg.segment_id = obj['id']
-            #     segment_msg.frame_seq = self.frame_seq
-            #     self.mask_pub.publish(segment_msg)
+            for obj in segments:
+                segment_msg = SegmentMask()
+                segment_msg.header = msg.header
+                segment_msg.mask_image = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
+                segment_msg.segment_id = obj['id']
+                segment_msg.frame_seq = self.frame_seq
+                self.mask_pub.publish(segment_msg)
 
 
 

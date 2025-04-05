@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+
+######################################## test passed
+
 import rospy
 import cv2
 import numpy as np
@@ -9,14 +13,14 @@ from sam2ros_msgs.msg import SegmentMask
 
 class MaskVisualizerNode:
     def __init__(self):
-        rospy.init_node('mask_visualizer_node', anonymous=True)
+        rospy.init_node('SAM2_test_node', anonymous=True)
 
         self.bridge = CvBridge()
         self.current_frame_seq = None
         self.current_segments = {}
 
-        rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback)
-        rospy.loginfo("Mask Visualizer Node started!")
+        rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback, queue_size=50) # if queue_size=1, cannot receive all messages
+        rospy.loginfo("SAM2 testing Node started!")
         self.loop()
 
     def mask_callback(self, msg):
@@ -79,7 +83,8 @@ class MaskVisualizerNode:
             canvas[y + offset_y:y + offset_y + h, x + offset_x:x + offset_x + w] = crop_display
 
         win_name = f"Segmented Crops (Frame seq: {self.current_frame_seq})"
-        cv2.imshow(win_name, canvas)
+        canvas_resized = cv2.resize(canvas, (0, 0), fx=0.5, fy=0.5)
+        cv2.imshow(win_name, canvas_resized)
         cv2.waitKey(1)
 
 if __name__ == '__main__':
