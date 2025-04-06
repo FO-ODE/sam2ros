@@ -28,4 +28,4 @@ unset LD_PRELOAD -->
 
 activate the venv: source ~/clip_ros_env/bin/activate
 
-in venv: export PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages:$PYTHONPATH
+<!-- in venv: export PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages:$PYTHONPATH -->

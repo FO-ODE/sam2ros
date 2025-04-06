@@ -158,13 +158,13 @@ class Sam2SegmentationNode:
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
             ######################################################## control the top-up fenster
-            # # cv2.imshow("Original Image", input_image)
-            # # cv2.imshow("Segmented Image", segmented_image)
-            # combined_image = np.hstack((input_image, segmented_image))
-            # cv2.imshow("Original | Segmented", combined_image)
-            # cv2.waitKey(1)
-            # display_with_subplots(segments) # slower, with matplotlib
-            # # display_segmented_objects_grid(segments) # faster, with opencv
+            # cv2.imshow("Original Image", input_image)
+            # cv2.imshow("Segmented Image", segmented_image)
+            combined_image = np.hstack((input_image, segmented_image))
+            cv2.imshow("Original | Segmented", combined_image)
+            cv2.waitKey(1)
+            display_with_subplots(segments) # slower, with matplotlib
+            # display_segmented_objects_grid(segments) # faster, with opencv
             ######################################################## control the top-up fenster
             
 

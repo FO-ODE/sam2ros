@@ -20,7 +20,7 @@ class MaskVisualizerNode:
         self.current_segments = {}
 
         rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback, queue_size=50) # if queue_size=1, cannot receive all messages
-        rospy.loginfo("SAM2 testing Node started!")
+        rospy.loginfo("SAM2 testing Node started")
         self.loop()
 
     def mask_callback(self, msg):
