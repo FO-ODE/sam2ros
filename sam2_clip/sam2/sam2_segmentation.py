@@ -149,7 +149,7 @@ class Sam2SegmentationNode:
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             segmented_image, segments, time_used = process_with_sam2(input_image, self.model)
             self.frame_seq += 1
-            rospy.logwarn(f"[{self.model_name}], 当前帧为{self.frame_seq}, 检测到 {len(segments)} 个目标, 消耗的时间为{time_used}[ms]。")
+            rospy.loginfo(f"[{self.model_name}], 当前帧为{self.frame_seq}, 检测到 {len(segments)} 个目标, 消耗的时间为{time_used}[ms]。")
 
             # 拼接 原图 & 分割图 ==> combined_image
             h1, w1 = input_image.shape[:2]
@@ -158,13 +158,13 @@ class Sam2SegmentationNode:
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
             ######################################################## control the top-up fenster
-            # cv2.imshow("Original Image", input_image)
-            # cv2.imshow("Segmented Image", segmented_image)
-            combined_image = np.hstack((input_image, segmented_image))
-            cv2.imshow("Original | Segmented", combined_image)
-            cv2.waitKey(1)
-            display_with_subplots(segments) # slower, with matplotlib
-            # display_segmented_objects_grid(segments) # faster, with opencv
+            # # cv2.imshow("Original Image", input_image)
+            # # cv2.imshow("Segmented Image", segmented_image)
+            # combined_image = np.hstack((input_image, segmented_image))
+            # cv2.imshow("Original | Segmented", combined_image)
+            # cv2.waitKey(1)
+            # display_with_subplots(segments) # slower, with matplotlib
+            # # display_segmented_objects_grid(segments) # faster, with opencv
             ######################################################## control the top-up fenster
             
 

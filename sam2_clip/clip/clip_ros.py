@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# 环境：clip-env
+############################ use clip-env
 
 import rospy
 import torch
@@ -22,7 +22,7 @@ class ClipSorterNode:
         print(f"Using device: {device}")
         self.device = device
         self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
-        self.prompt = ["a human"]
+        self.prompt = ["a man"]
         self.text_features = self.encode_text(self.prompt)
 
         # 图像缓存 & 当前帧处理 ID
