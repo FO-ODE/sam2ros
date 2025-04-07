@@ -21,7 +21,7 @@ class CLIPNode:
         self.current_frame_seq = None
         self.current_segments = {}
 
-        self.text_prompts = ["a person"]  # 提示
+        self.text_prompts = ["a man", "not a man"]  # 提示
         self.text_features = self.encode_text_prompts(self.text_prompts)
 
         rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback, queue_size=50)
@@ -75,17 +75,19 @@ class CLIPNode:
         with torch.no_grad():
             image_features = self.model.encode_image(image_input).float().cpu()
 
-        similarities = (image_features @ self.text_features.T).numpy()
-        best_scores = similarities.max(axis=1)  # 每个 segment 与所有 prompts 的最大相似度
+        logits = image_features @ self.text_features.T
+        probs = torch.nn.functional.softmax(logits, dim=1).numpy()
 
-        # 将所有 segment 按得分排序
-        sorted_results = sorted(zip(id_list, best_scores), key=lambda x: x[1], reverse=True)
+        # 用 "a person" 的概率作为排序依据
+        person_probs = probs[:, 0]
+        sorted_results = sorted(zip(id_list, person_probs), key=lambda x: x[1], reverse=True)
 
-        rospy.loginfo(f"[Frame {self.current_frame_seq}] CLIP ranking:")
-        for rank, (seg_id, score) in enumerate(sorted_results, start=1):
-            rospy.loginfo(f"  {rank}. Segment ID: {seg_id}, Score: {score:.4f}")
+        rospy.loginfo(f"[Frame {self.current_frame_seq}] Ranking by 'a person' probability:")
+        for rank, (seg_id, prob) in enumerate(sorted_results, start=1):
+            rospy.loginfo(f"  {rank}. Segment ID: {seg_id}, a person: {prob * 100:.2f}%")
 
         self.current_segments.clear()
+
 
 
 
