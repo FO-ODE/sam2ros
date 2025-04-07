@@ -21,7 +21,7 @@ class CLIPNode:
         self.current_frame_seq = None
         self.current_segments = {}
 
-        self.text_prompts = ["a man", "not a man"]  # 提示
+        self.text_prompts = ["a man", "nothing","a item"]  # 提示
         self.text_features = self.encode_text_prompts(self.text_prompts)
 
         rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback, queue_size=50)
