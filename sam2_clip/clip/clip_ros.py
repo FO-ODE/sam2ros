@@ -21,17 +21,24 @@ class CLIPNode:
         self.current_frame_seq = None
         self.current_segments = {}
 
-        self.text_prompts = ["a man", "nothing","a item"]  # 提示
+        ################################################################################ parameters
+        self.text_prompts = ["a man pointing at something", "a man sitting on the floor"]  # prompts to compare with
+        self.num_segments_to_print = 10  # number of segments to print
+        ################################################################################
+
+
         self.text_features = self.encode_text_prompts(self.text_prompts)
 
         rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback, queue_size=50)
         rospy.loginfo(f"CLIP Node started, using device: {self.device}, prompts: {self.text_prompts}")
         self.loop()
 
+
     def encode_text_prompts(self, prompts):
         with torch.no_grad():
             text = clip.tokenize(prompts).to(self.device)
             return self.model.encode_text(text).float().cpu()
+
 
     def mask_callback(self, msg):
         try:
@@ -47,11 +54,13 @@ class CLIPNode:
         except Exception as e:
             rospy.logerr(f"Failed to convert image: {e}")
 
+
     def loop(self):
         rate = rospy.Rate(2)  # 降低频率，确保处理完一帧再进入下一帧
         while not rospy.is_shutdown():
             self.process_segments()
             rate.sleep()
+
 
     def process_segments(self):
         if not self.current_segments:
@@ -78,13 +87,36 @@ class CLIPNode:
         logits = image_features @ self.text_features.T
         probs = torch.nn.functional.softmax(logits, dim=1).numpy()
 
-        # 用 "a person" 的概率作为排序依据
-        person_probs = probs[:, 0]
-        sorted_results = sorted(zip(id_list, person_probs), key=lambda x: x[1], reverse=True)
+        main_prompt_index = 0
+        main_prompt_name = self.text_prompts[main_prompt_index]
 
-        rospy.loginfo(f"[Frame {self.current_frame_seq}] Ranking by 'a person' probability:")
-        for rank, (seg_id, prob) in enumerate(sorted_results, start=1):
-            rospy.loginfo(f"  {rank}. Segment ID: {seg_id}, a person: {prob * 100:.2f}%")
+        sorted_indices = np.argsort(probs[:, main_prompt_index])[::-1]
+
+
+        num_to_print = min(self.num_segments_to_print, len(sorted_indices))
+
+        rospy.loginfo(f"[Frame {self.current_frame_seq}] Ranking by '{main_prompt_name}' probability (Top {num_to_print}):")
+        for rank, idx in enumerate(sorted_indices[:num_to_print], start=1):
+            seg_id = id_list[idx]
+            segment_probs = probs[idx]
+            main_prob = segment_probs[main_prompt_index] * 100
+
+
+        GREEN = "\033[92m"
+        RESET = "\033[0m"
+        for rank, idx in enumerate(sorted_indices[:num_to_print], start=1):
+            seg_id = id_list[idx]
+            segment_probs = probs[idx]
+            main_score = logits[idx][main_prompt_index]  # score for the main prompt
+            line = f"  {rank}. Segment ID: {seg_id}, {main_prompt_name} with score: {main_score:.4f}"
+            if rank == 1:
+                rospy.loginfo(f"{GREEN}{line}{RESET}") # first line with color
+            else:
+                rospy.loginfo(line)
+
+            for prompt, prob in zip(self.text_prompts, segment_probs):
+                rospy.loginfo(f"       {prompt}: {prob * 100:.2f}%")
+
 
         self.current_segments.clear()
 
