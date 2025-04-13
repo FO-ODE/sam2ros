@@ -34,10 +34,10 @@ RUN echo "source /opt/ros/noetic/setup.bash" >> /etc/bash.bashrc
 WORKDIR /root/catkin_ws
 
 # 7. 拷贝源码
-COPY ./catkin_ws/src ./src
+# COPY ./catkin_ws/src ./src
 
 # 8. 构建 catkin_ws
-RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/catkin_ws && catkin_make"
+# RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/catkin_ws && catkin_make"
 
 # 9. 启动脚本
 COPY entrypoint.sh /entrypoint.sh

@@ -1,4 +1,8 @@
 #!/bin/bash
 source /opt/ros/noetic/setup.bash
-source /root/catkin_ws/devel/setup.bash
+
+if [ -f /root/catkin_ws/devel/setup.bash ]; then
+    source /root/catkin_ws/devel/setup.bash
+fi
+
 exec "$@"
