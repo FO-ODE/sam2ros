@@ -31,7 +31,7 @@ ENV ROS_DISTRO=noetic
 RUN echo "source /opt/ros/noetic/setup.bash" >> /etc/bash.bashrc
 
 # 6. 工作目录
-WORKDIR /root/catkin_ws
+WORKDIR /catkin_ws
 
 # 7. 拷贝源码
 # COPY ./catkin_ws/src ./src
