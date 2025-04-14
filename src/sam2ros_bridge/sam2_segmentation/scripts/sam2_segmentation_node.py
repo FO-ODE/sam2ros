@@ -3,7 +3,7 @@
 
 # must run in the same terminal before running the script (done in the activate script of sam2-env)
 # export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libffi.so.7" 
-
+import os
 import rospy
 import cv2
 import time
@@ -126,8 +126,14 @@ def display_segmented_objects_grid(objects, win_name="Segmented Objects", max_co
 class Sam2SegmentationNode:
     def __init__(self):
         rospy.init_node("sam2_segmentation_node", anonymous=True)
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(current_dir, "../../SAM_models/sam2.1_b.pt")  
+        model_path = os.path.abspath(model_path)
+        # 'mobile_sam.pt',              'sam_b.pt',    'sam_l.pt',  'sam_h.pt',    
+        # 'sam2_t.pt',   'sam2_s.pt',   'sam2_b.pt',   'sam2_l.pt', 
+        # 'sam2.1_t.pt', 'sam2.1_s.pt', 'sam2.1_b.pt', 'sam2.1_l.pt'
         
-        model_path = "SAM_models/sam2.1_b.pt"
         self.model = SAM(model_path)
         self.model.to('cuda:0')
         self.model_name = Path(model_path).stem
@@ -158,13 +164,13 @@ class Sam2SegmentationNode:
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
             ######################################################## control the top-up fenster
-            # cv2.imshow("Original Image", input_image)
-            # cv2.imshow("Segmented Image", segmented_image)
-            combined_image = np.hstack((input_image, segmented_image))
-            cv2.imshow("Original | Segmented", combined_image)
-            cv2.waitKey(1)
-            display_with_subplots(segments) # slower, with matplotlib
-            # display_segmented_objects_grid(segments) # faster, with opencv
+            # # cv2.imshow("Original Image", input_image)
+            # # cv2.imshow("Segmented Image", segmented_image)
+            # combined_image = np.hstack((input_image, segmented_image))
+            # cv2.imshow("Original | Segmented", combined_image)
+            # cv2.waitKey(1)
+            # display_with_subplots(segments) # slower, with matplotlib
+            # # display_segmented_objects_grid(segments) # faster, with opencv
             ######################################################## control the top-up fenster
             
 
