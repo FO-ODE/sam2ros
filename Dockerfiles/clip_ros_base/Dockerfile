@@ -1,3 +1,4 @@
+# Dockerfile for CLIP ROS Base Environment
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -23,24 +24,28 @@ RUN rosdep init && rosdep update
 # 4. 安装 Python 包
 RUN pip3 install --upgrade pip
 RUN pip3 install rospkg catkin_pkg opencv-python numpy
+
+# 5. 安装 PyTorch（CUDA 11.8）+ CLIP 依赖
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 RUN pip3 install git+https://github.com/openai/CLIP.git
 
-# 5. ROS 环境变量
+# 6. 设置 ROS 环境变量
 ENV ROS_DISTRO=noetic
 RUN echo "source /opt/ros/noetic/setup.bash" >> /etc/bash.bashrc
 
-# 6. 工作目录
+# 7. 设置工作目录
 WORKDIR /catkin_ws
 
-# 7. 拷贝源码
-# COPY ./catkin_ws/src ./src
-
-# 8. 构建 catkin_ws
-# RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && cd /root/catkin_ws && catkin_make"
-
-# 9. 启动脚本
+# 8. 添加启动脚本
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
+CMD [ "bash" ]
+
+###################################################################
+# 8. 构建镜像
+# docker build -t foode258/clip_ros_base:env .
+
+# 9. 运行容器 docker or with rocker 
+# docker run -it --rm --gpus all --name clip_ros_base foode258/clip_ros_base:env

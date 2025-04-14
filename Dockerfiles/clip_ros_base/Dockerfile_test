@@ -1,0 +1,49 @@
+FROM ros:noetic
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+# 1. 安装基础工具和 ROS 常用依赖
+RUN apt update && apt install -y \
+    lsb-release gnupg2 curl wget git locales \
+    python3 python3-pip python3-venv python3-dev \
+    build-essential \
+    python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool \
+    python3-catkin-tools \
+    ros-noetic-cv-bridge \
+    ros-noetic-image-transport \
+    ros-noetic-tf \
+    ros-noetic-sensor-msgs \
+    ros-noetic-geometry-msgs \
+    ros-noetic-visualization-msgs \
+    ros-noetic-std-msgs
+
+# 2. rosdep 初始化
+RUN rosdep update
+
+# 3. 安装 Python 包
+RUN pip3 install --upgrade pip && \
+    pip3 install rospkg catkin_pkg opencv-python numpy && \
+    pip3 install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118 && \
+    pip3 install git+https://github.com/openai/CLIP.git
+
+# 4. ROS 环境变量
+ENV ROS_DISTRO=noetic
+
+# 5. 工作目录
+WORKDIR /catkin_ws
+
+# 6. 启动脚本
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
+
+
+###################################################################
+# 10. 构建镜像
+# docker build -t foode258/clip_ros_base:test .
+
+
+# Dockerfile ERROR: Package 'networkx' requires a different Python: 3.8.10 not in '>=3.10'
