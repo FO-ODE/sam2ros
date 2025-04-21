@@ -30,7 +30,7 @@ class ClipNode:
         self.last_frame_time = None
         self.frame_timeout = 0.5  # 每帧最多等待0.5秒收集完所有 segment
 
-        rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.segment_callback)
+        rospy.Subscriber("/sam2ros/sam_segment", SegmentMask, self.segment_callback)
         rospy.loginfo("CLIP node started")
         rospy.spin()
 

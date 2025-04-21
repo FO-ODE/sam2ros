@@ -29,7 +29,7 @@ class CLIPNode:
 
         self.text_features = self.encode_text_prompts(self.text_prompts)
 
-        rospy.Subscriber("/sam2ros/mask_segment", SegmentMask, self.mask_callback, queue_size=50)
+        rospy.Subscriber("/sam2ros/sam_segment", SegmentMask, self.mask_callback, queue_size=50)
         rospy.loginfo(f"CLIP Node started, using device: {self.device}, prompts: {self.text_prompts}")
         self.loop()
 

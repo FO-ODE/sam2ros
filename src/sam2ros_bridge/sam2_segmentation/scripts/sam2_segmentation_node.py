@@ -136,12 +136,12 @@ class Sam2SegmentationNode:
         self.frame_seq = 0
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
-        self.image_pub = rospy.Publisher("/xtion/rgb/mask_segment", Image, queue_size=10)  # for RVIZ
-        self.mask_pub = rospy.Publisher("/sam2ros/mask_segment", SegmentMask, queue_size=50) # if queue_size=1, cannot publish all messages
+        self.image_pub = rospy.Publisher("/xtion/rgb/sam_segment", Image, queue_size=10)  # for RVIZ
+        self.mask_pub = rospy.Publisher("/sam2ros/sam_segment", SegmentMask, queue_size=50) # if queue_size=1, cannot publish all messages
 
         self.bridge = CvBridge()
         
-        rospy.loginfo("SAM2 segmentation node has started!")
+        rospy.loginfo("SAM2 Segmentation Node Initialized")
         rospy.loginfo(f"Using model: {self.model_name}")
         rospy.spin()
 
