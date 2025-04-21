@@ -4,7 +4,7 @@ import os
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "../../YOLO_models/yolov8l-pose.pt")  
+model_path = os.path.join(current_dir, "../../YOLO_models/yolo11l-pose.pt")  
 model_path = os.path.abspath(model_path)
 model = YOLO(model_path)
 model.to('cuda:0')

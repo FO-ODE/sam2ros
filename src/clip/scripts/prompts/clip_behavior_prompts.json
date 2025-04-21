@@ -1,0 +1,46 @@
+{
+    "greetings": [
+      "a person is waving",
+      "a person is shaking hands",
+      "a person is bowing",
+      "a person is raising their hand"
+    ],
+    "communication": [
+      "a person is talking on the phone",
+      "a person is speaking to someone",
+      "a person is gesturing while talking",
+      "a person is pointing at something"
+    ],
+    "movement": [
+      "a person is walking",
+      "a person is running",
+      "a person is sitting down",
+      "a person is standing up",
+      "a person is approaching someone",
+      "a person is walking away"
+    ],
+    "interaction_with_object": [
+      "a person is picking up an object",
+      "a person is placing something down",
+      "a person is using a tool",
+      "a person is touching a screen"
+    ],
+    "emotions": [
+      "a person looks angry",
+      "a person looks happy",
+      "a person is confused",
+      "a person is frightened"
+    ],
+    "aggression": [
+      "a person is attacking",
+      "a person is about to punch",
+      "a person is holding a weapon",
+      "a person is in a fighting stance"
+    ],
+    "cooperation": [
+      "a person is helping someone",
+      "a person is handing something to another person",
+      "a person is working together with others"
+    ]
+  }
+  

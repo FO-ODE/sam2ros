@@ -20,6 +20,9 @@ class PoseDetector:
         self.model = YOLO(self.model_path).to("cuda")
         self.bridge = CvBridge()
         
+        # 参数配置
+        self.side_angle_thres = 45   # 侧抬手臂判定阈值
+        self.forward_thres = 30      # 前抬手臂垂直偏差阈值
         
         # 发布器
         self.stop_pub = rospy.Publisher("/test_topic", String, queue_size=1)
@@ -32,6 +35,12 @@ class PoseDetector:
         cv2.namedWindow("YOLOv8 Pose Detection", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("YOLOv8 Pose Detection", 1280, 720)
 
+    def calculate_angle(self, a, b, c):
+        """计算三个关键点之间的角度(以b为顶点)"""
+        ba = a - b
+        bc = c - b
+        cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+        return math.degrees(np.arccos(cosine_angle))
 
     def image_callback(self, msg):
         try:
@@ -65,7 +74,31 @@ class PoseDetector:
                     right_elbow = person[8]
                     right_wrist = person[10]
 
+                    # ========== 侧抬手检测 ==========
+                    left_arm_angle = self.calculate_angle(left_shoulder, left_elbow, left_wrist)
+                    right_arm_angle = self.calculate_angle(right_shoulder, right_elbow, right_wrist)
+                    
+                    if left_arm_angle < self.side_angle_thres:
+                        self.stop_pub.publish(String(data="stop_follow"))
+                        cv2.putText(annotated_frame, "LEFT ARM RAISED", (50, 50),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                    elif right_arm_angle < self.side_angle_thres:
+                        self.stop_pub.publish(String(data="stop_follow")) 
+                        cv2.putText(annotated_frame, "RIGHT ARM RAISED", (50, 50),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
+                    # ========== 前抬手检测 ==========
+                    left_vertical_diff = abs(left_wrist[1] - left_shoulder[1])
+                    right_vertical_diff = abs(right_wrist[1] - right_shoulder[1])
+                    
+                    if left_vertical_diff < self.forward_thres:
+                        self.grasp_pub.publish(String(data="start_grasp"))
+                        cv2.putText(annotated_frame, "FORWARD LEFT ARM", (50, 100),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    elif right_vertical_diff < self.forward_thres:
+                        self.grasp_pub.publish(String(data="start_grasp"))
+                        cv2.putText(annotated_frame, "FORWARD RIGHT ARM", (50, 100),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
             # 显示处理后的图像
             cv2.imshow("YOLOv8 Pose Detection", annotated_frame)
