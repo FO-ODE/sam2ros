@@ -9,6 +9,17 @@ from std_msgs.msg import String
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 
+
+def process_with_yolo(input_image, model):
+    
+    results = model(input_image, verbose=False)  # [0]: first image processed by YOLO
+
+
+    return results
+
+
+
+
 class Yolosegmentation:
     def __init__(self):
         rospy.init_node('yolo_segmentation_node', anonymous=True)
@@ -30,34 +41,25 @@ class Yolosegmentation:
         # 订阅摄像头图像
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
 
-        # 初始化OpenCV窗口
-        cv2.namedWindow("yolo segmentation", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("yolo segmentation", 1280, 720)
 
     def image_callback(self, msg):
         try:
-            # 图像转换
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-
-            # 推理检测
-            results = self.model(cv_image, verbose=False)
-
-            # 可视化处理
-            if results[0].boxes is not None:
-                annotated_frame = results[0].plot()  # 绘制检测框
-            else:
-                annotated_frame = cv_image.copy()
-
-            # 显示处理后的图像
-            cv2.imshow("yolo segmentation", annotated_frame)
+            rospy.loginfo(f"Image encoding: {msg.encoding}")
+            input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            segmented_image = process_with_yolo(input_image, self.model)
+            # cv2.imwrite("/tmp/input_debug.jpg", input_image)  # 保存一帧图片调试
+            cv2.imshow(f"{self.model_name}", segmented_image)
             cv2.waitKey(1)
 
+
         except Exception as e:
-            rospy.logerr(f"Processing error: {str(e)}")
-        finally:
-            if rospy.is_shutdown():
-                cv2.destroyAllWindows()
+            rospy.logerr(f"error: {str(e)}")
+
+
 
 if __name__ == '__main__':
     Yolosegmentation()
     rospy.spin()
+
+
+

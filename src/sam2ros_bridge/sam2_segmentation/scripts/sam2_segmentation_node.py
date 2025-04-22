@@ -21,7 +21,7 @@ def process_with_sam2(input_image, model):
     
     start_time = time.time()
     results = model(input_image, verbose=False)[0] # [0]: first image processed by SAM2
-    # verbose=False: suppresses the output of the model
+    # verbose=False: suppresses the output of the model in terminal
     time_used = (time.time() - start_time) * 1000 # in [ms]
     time_used = round(time_used, 2)
     
@@ -160,13 +160,13 @@ class Sam2SegmentationNode:
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
                 
             ######################################################## control the top-up fenster
-            # # cv2.imshow("Original Image", input_image)
-            # # cv2.imshow("Segmented Image", segmented_image)
-            # combined_image = np.hstack((input_image, segmented_image))
-            # cv2.imshow("Original | Segmented", combined_image)
-            # cv2.waitKey(1)
+            # cv2.imshow("Original Image", input_image)
+            # cv2.imshow("Segmented Image", segmented_image)
+            combined_image = np.hstack((input_image, segmented_image))
+            cv2.imshow("Original | Segmented", combined_image)
+            cv2.waitKey(1)
             # display_with_subplots(segments) # slower, with matplotlib
-            # # display_segmented_objects_grid(segments) # faster, with opencv
+            # display_segmented_objects_grid(segments) # faster, with opencv
             ######################################################## control the top-up fenster
             
 
