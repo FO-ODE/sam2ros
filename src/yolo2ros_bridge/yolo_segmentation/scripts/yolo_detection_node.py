@@ -9,13 +9,6 @@ from sensor_msgs.msg import Image
 from ultralytics import YOLO
 
 
-def process_with_yolo(input_image, model):
-    
-    results = model(input_image)
-    
-    return results
-
-
 class YoloDetectionNode:
     def __init__(self):
         rospy.init_node('yolo_detection_node', anonymous=True)
