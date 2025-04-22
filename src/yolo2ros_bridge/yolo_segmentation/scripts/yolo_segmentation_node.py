@@ -12,12 +12,9 @@ from ultralytics import YOLO
 
 def process_with_yolo(input_image, model):
     
-    results = model(input_image, verbose=False)  # [0]: first image processed by YOLO
-
+    results = model(input_image, verbose=False)[0]  # [0]: first image processed by YOLO
 
     return results
-
-
 
 
 class Yolosegmentation:
@@ -44,12 +41,12 @@ class Yolosegmentation:
 
     def image_callback(self, msg):
         try:
-            rospy.loginfo(f"Image encoding: {msg.encoding}")
+            # rospy.loginfo(f"Image encoding: {msg.encoding}")
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             segmented_image = process_with_yolo(input_image, self.model)
             # cv2.imwrite("/tmp/input_debug.jpg", input_image)  # 保存一帧图片调试
-            cv2.imshow(f"{self.model_name}", segmented_image)
-            cv2.waitKey(1)
+            # cv2.imshow(f"{self.model_name}", segmented_image)
+            # cv2.waitKey(1)
 
 
         except Exception as e:
