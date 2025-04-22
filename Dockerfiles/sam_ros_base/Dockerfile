@@ -24,6 +24,9 @@ RUN rosdep init && rosdep update
 # 4. 安装 Python 包
 RUN pip3 install --upgrade pip
 RUN pip3 install rospkg catkin_pkg opencv-python numpy
+RUN pip install git+https://github.com/eric-wieser/ros_numpy
+
+
 
 # 5. 安装 PyTorch（CUDA 11.8）+ Ultralytics 依赖
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118

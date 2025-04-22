@@ -1,20 +1,40 @@
 # -*- coding: utf-8 -*-
+import time
+import ros_numpy
+import rospy
+from sensor_msgs.msg import Image
 from ultralytics import YOLO
-import os
+
+detection_model = YOLO("yolo11m.pt")
+segmentation_model = YOLO("yolo11m-seg.pt")
+rospy.init_node("ultralytics")
+time.sleep(1)
 
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "../../YOLO_models/yolo11l-pose.pt")  
-model_path = os.path.abspath(model_path)
-model = YOLO(model_path)
-model.to('cuda:0')
-
-file_path = os.path.join(current_dir, "../../../test/test_images/workers.jpg")
-file_path = os.path.join(current_dir, "../../../test/test_videos/test.mp4")
-file_path = os.path.abspath(file_path)
 
 
-# Run inference with the YOLO12n model on the 'bus.jpg' image
-results = model(file_path, save=True, save_txt=True, show=True)
+det_image_pub = rospy.Publisher("/ultralytics/detection/image", Image, queue_size=5)
+seg_image_pub = rospy.Publisher("/ultralytics/segmentation/image", Image, queue_size=5)
 
 
+
+
+
+def callback(data):
+    """Callback function to process image and publish annotated images."""
+    array = ros_numpy.numpify(data)
+    if det_image_pub.get_num_connections():
+        det_result = detection_model(array)
+        det_annotated = det_result[0].plot(show=False)
+        det_image_pub.publish(ros_numpy.msgify(Image, det_annotated, encoding="rgb8"))
+
+    if seg_image_pub.get_num_connections():
+        seg_result = segmentation_model(array)
+        seg_annotated = seg_result[0].plot(show=False)
+        seg_image_pub.publish(ros_numpy.msgify(Image, seg_annotated, encoding="rgb8"))
+
+
+rospy.Subscriber("/xtion/rgb/image_raw", Image, callback)
+
+while True:
+    rospy.spin()
