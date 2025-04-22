@@ -161,6 +161,7 @@ include_directories(
 # in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/test_yolo.py
+  scripts/yolo_detection_node.py
   scripts/yolo_segmentation_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
