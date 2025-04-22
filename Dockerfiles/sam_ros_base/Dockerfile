@@ -23,7 +23,7 @@ RUN rosdep init && rosdep update
 
 # 4. 安装 Python 包
 RUN pip3 install --upgrade pip
-RUN pip3 install rospkg catkin_pkg opencv-python numpy
+RUN pip3 install rospkg catkin_pkg opencv-python numpy tensorflow mediapipe
 RUN pip install git+https://github.com/eric-wieser/ros_numpy
 
 
@@ -49,7 +49,7 @@ CMD [ "bash" ]
 
 ###################################################################
 # 8. 构建镜像
-# docker build -t foode258/sam_ros_base:env .
+# docker build -t foode258/ultralytics_ros_base:env .
 
 # 9. 运行容器 docker or with rocker
 # docker run -it --rm --gpus all --name sam_container foode258/sam_ros_base:env
