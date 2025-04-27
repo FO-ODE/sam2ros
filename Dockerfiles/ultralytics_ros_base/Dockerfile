@@ -8,7 +8,7 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 RUN apt update && apt install -y \
     lsb-release gnupg2 curl wget git locales \
     python3 python3-pip python3-venv python3-dev \
-    build-essential
+    build-essential terminator
 
 # 2. 配置 ROS Noetic 源
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'

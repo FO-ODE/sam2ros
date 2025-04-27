@@ -8,3 +8,6 @@ logs
 
 # 忽略 LibreOffice 临时文件
 .~lock.Command_SAM.odt# 
+
+Charades
+.mp4
