@@ -45,7 +45,7 @@ CMD [ "bash" ]
 
 ###################################################################
 # 8. 构建镜像
-# docker build -t foode258/clip_ros_base:env .
+# docker build -t foode258/clip_ros_base:envtest .
 
 # 9. 运行容器 docker or with rocker 
 # docker run -it --rm --gpus all --name clip_ros_base foode258/clip_ros_base:env
