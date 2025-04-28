@@ -17,7 +17,7 @@ RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt
 # 3. 安装 ROS Noetic
 RUN apt update && apt install -y ros-noetic-desktop-full \
     python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool \
-    python3-catkin-tools
+    python3-catkin-tools ros-noetic-video-stream-opencv
 
 RUN rosdep init && rosdep update
 
@@ -49,7 +49,7 @@ CMD [ "bash" ]
 
 ###################################################################
 # 8. 构建镜像
-# docker build -t foode258/ultralytics_ros_base:env .
+# docker build -t foode258/ultralytics_ros_base:envtest .
 
 # 9. 运行容器 docker or with rocker
 # docker run -it --rm --gpus all --name sam_container foode258/sam_ros_base:env
