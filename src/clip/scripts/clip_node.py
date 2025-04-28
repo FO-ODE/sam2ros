@@ -21,15 +21,16 @@ class CLIPNode:
 
         self.bridge = CvBridge()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
-
+        
+        script_dir = os.path.dirname(__file__)
+        model_path = os.path.join(script_dir, "..", "CLIP_models", "ViT-L-14.pt") # ViT-L-14.pt # ViT-B-32.pt
+        self.model, self.preprocess = clip.load(model_path, device=self.device)
         self.current_frame_seq = None
         self.current_segments = {}
 
         ################################################################################ parameters
         # self.text_prompts = ["a man pointing at something", "a man sitting on the floor"]  # prompts to compare with
-        script_dir = os.path.dirname(__file__)
-        json_path = os.path.join(script_dir, "prompts", "clip_behavior_prompts.json")
+        json_path = os.path.join(script_dir, "..", "prompts", "clip_behavior_prompts.json")
 
         with open(json_path, "r") as f:
             prompt_dict = json.load(f)
@@ -45,7 +46,8 @@ class CLIPNode:
 
         self.text_features = self.encode_text_prompts(self.text_prompts)
 
-        rospy.Subscriber("/xtion/rgb/image_raw", Image, self.mask_callback, queue_size=50)
+        # rospy.Subscriber("/xtion/rgb/image_raw", Image, self.mask_callback, queue_size=10)
+        rospy.Subscriber("/ultralytics/person_crop/image", Image, self.mask_callback, queue_size=10)
         rospy.loginfo(f"CLIP Node started, using device: {self.device}")
         self.loop()
 
@@ -104,18 +106,27 @@ class CLIPNode:
         logits = image_features @ self.text_features.T
         probs = torch.nn.functional.softmax(logits, dim=1).numpy()
 
-        rospy.loginfo(f"[Frame {self.current_frame_seq}] Top 5 predictions per segment:")
+        rospy.loginfo(f"[Frame {self.current_frame_seq}] Top {self.num_segments_to_print} predictions per segment:")
 
+
+        GREEN = "\033[92m"
+        RESET = "\033[0m"
         for idx, seg_id in enumerate(id_list):
             segment_probs = probs[idx]
             # 找出 top5
-            top5_indices = np.argsort(segment_probs)[::-1][:5]
+            top_indices = np.argsort(segment_probs)[::-1][:self.num_segments_to_print]
 
             rospy.loginfo(f"  Segment ID {seg_id}:")
-            for rank, prompt_idx in enumerate(top5_indices, start=1):
+            for rank, prompt_idx in enumerate(top_indices, start=1):
                 prompt = self.text_prompts[prompt_idx]
                 prob = segment_probs[prompt_idx] * 100
-                rospy.loginfo(f"    {rank}. {prompt}: {prob:.2f}%")
+                if prob > 80:  # 如果概率大于80%
+                    # with green color
+                    rospy.loginfo(f"    {rank}. {GREEN}{prompt}: {prob:.2f}%{RESET}")
+                elif prob > 30:
+                    rospy.logwarn(f"    {rank}. {prompt}: {prob:.2f}%")
+                else:
+                    rospy.loginfo(f"    {rank}. {prompt}: {prob:.2f}%")
 
         self.current_segments.clear()
 

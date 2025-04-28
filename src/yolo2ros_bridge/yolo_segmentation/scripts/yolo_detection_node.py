@@ -43,7 +43,8 @@ class YoloDetectionNode:
         """Callback function to process image and publish annotated images."""
         """Detection, Segmentation, Pose"""
         input_image = ros_numpy.numpify(msg)
-        if self.det_image_pub.get_num_connections():
+        if self.det_image_pub.get_num_connections() or self.person_crop_pub.get_num_connections():
+            # Perform detection
             det_result = self.det_model(input_image)
             det_annotated = det_result[0].plot(show=False)
             self.det_image_pub.publish(ros_numpy.msgify(Image, det_annotated, encoding="rgb8"))

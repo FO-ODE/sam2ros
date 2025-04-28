@@ -8,7 +8,7 @@ import os
 
 
 script_dir = os.path.dirname(__file__)
-json_path = os.path.join(script_dir, "prompts/clip_behavior_prompts.json")
+json_path = os.path.join(script_dir, "../prompts/clip_behavior_prompts.json")
 with open(json_path, "r") as f:
     prompt_dict = json.load(f)
 
@@ -20,10 +20,10 @@ for prompts in prompt_dict.values():
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
-model, preprocess = clip.load("ViT-B/32", device=device)
+model, preprocess = clip.load("ViT-L/14", device=device)
 
 # 加载图像
-image = preprocess(Image.open("../test_images/workers.jpg")).unsqueeze(0).to(device)
+image = preprocess(Image.open("../../test_images/workers.jpg")).unsqueeze(0).to(device)
 
 # 编码
 text = clip.tokenize(all_prompts).to(device)

@@ -159,13 +159,14 @@ include_directories(
 
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
-catkin_install_python(PROGRAMS
-  scripts/test_yolo.py
-  scripts/yolo_detection_node.py
-  scripts/yolo_segmentation_node.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+file(GLOB PYTHON_SCRIPTS
+  scripts/*.py
 )
 
+catkin_install_python(
+  PROGRAMS ${PYTHON_SCRIPTS}
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
 # install(TARGETS ${PROJECT_NAME}_node

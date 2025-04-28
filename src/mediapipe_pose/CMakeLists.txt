@@ -154,6 +154,15 @@ include_directories(
 ## Install ##
 #############
 
+file(GLOB PYTHON_SCRIPTS
+  scripts/*.py
+)
+
+catkin_install_python(
+  PROGRAMS ${PYTHON_SCRIPTS}
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
