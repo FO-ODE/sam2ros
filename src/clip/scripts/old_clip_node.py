@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
-import json
+
 import rospy
 import cv2
 import numpy as np
@@ -9,11 +8,7 @@ from cv_bridge import CvBridge
 from sam2ros_msgs.msg import SegmentMask
 import torch
 import clip
-from sensor_msgs.msg import Image
-from PIL import Image as PILImage
-
-
-
+from PIL import Image
 
 class CLIPNode:
     def __init__(self):
@@ -27,26 +22,15 @@ class CLIPNode:
         self.current_segments = {}
 
         ################################################################################ parameters
-        # self.text_prompts = ["a man pointing at something", "a man sitting on the floor"]  # prompts to compare with
-        script_dir = os.path.dirname(__file__)
-        json_path = os.path.join(script_dir, "prompts", "clip_behavior_prompts.json")
-
-        with open(json_path, "r") as f:
-            prompt_dict = json.load(f)
-        
-        all_prompts = []
-        for prompts in prompt_dict.values():
-            all_prompts.extend(prompts)
-
-        self.text_prompts = all_prompts
-        self.num_segments_to_print = 3  # number of segments to print
+        self.text_prompts = ["a man pointing at something", "a man sitting on the floor"]  # prompts to compare with
+        self.num_segments_to_print = 10  # number of segments to print
         ################################################################################
 
 
         self.text_features = self.encode_text_prompts(self.text_prompts)
 
-        rospy.Subscriber("/xtion/rgb/image_raw", Image, self.mask_callback, queue_size=50)
-        rospy.loginfo(f"CLIP Node started, using device: {self.device}")
+        rospy.Subscriber("/sam2ros/sam_segment", SegmentMask, self.mask_callback, queue_size=50)
+        rospy.loginfo(f"CLIP Node started, using device: {self.device}, prompts: {self.text_prompts}")
         self.loop()
 
 
@@ -58,18 +42,17 @@ class CLIPNode:
 
     def mask_callback(self, msg):
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")  # 直接用 msg
-            frame_seq = rospy.Time.now().to_nsec()  # 你原来用 frame_seq，这里没有，就用时间戳代替吧
+            cv_image = self.bridge.imgmsg_to_cv2(msg.mask_image, "bgr8")
+            frame_seq = msg.frame_seq
 
             if self.current_frame_seq != frame_seq:
                 self.current_frame_seq = frame_seq
                 self.current_segments.clear()
 
-            self.current_segments[frame_seq] = cv_image  # 用时间戳当作segment id
+            self.current_segments[msg.segment_id] = cv_image
 
         except Exception as e:
             rospy.logerr(f"Failed to convert image: {e}")
-
 
 
     def loop(self):
@@ -91,7 +74,7 @@ class CLIPNode:
         id_list = []
 
         for seg_id, img in sorted(segments.items()):
-            pil_img = PILImage.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             tensor = self.preprocess(pil_img).unsqueeze(0)
             image_tensors.append(tensor)
             id_list.append(seg_id)
@@ -104,21 +87,38 @@ class CLIPNode:
         logits = image_features @ self.text_features.T
         probs = torch.nn.functional.softmax(logits, dim=1).numpy()
 
-        rospy.loginfo(f"[Frame {self.current_frame_seq}] Top 5 predictions per segment:")
+        main_prompt_index = 0
+        main_prompt_name = self.text_prompts[main_prompt_index]
 
-        for idx, seg_id in enumerate(id_list):
+        sorted_indices = np.argsort(probs[:, main_prompt_index])[::-1]
+
+
+        num_to_print = min(self.num_segments_to_print, len(sorted_indices))
+
+        rospy.loginfo(f"[Frame {self.current_frame_seq}] Ranking by '{main_prompt_name}' probability (Top {num_to_print}):")
+        for rank, idx in enumerate(sorted_indices[:num_to_print], start=1):
+            seg_id = id_list[idx]
             segment_probs = probs[idx]
-            # 找出 top5
-            top5_indices = np.argsort(segment_probs)[::-1][:5]
+            main_prob = segment_probs[main_prompt_index] * 100
 
-            rospy.loginfo(f"  Segment ID {seg_id}:")
-            for rank, prompt_idx in enumerate(top5_indices, start=1):
-                prompt = self.text_prompts[prompt_idx]
-                prob = segment_probs[prompt_idx] * 100
-                rospy.loginfo(f"    {rank}. {prompt}: {prob:.2f}%")
+
+        GREEN = "\033[92m"
+        RESET = "\033[0m"
+        for rank, idx in enumerate(sorted_indices[:num_to_print], start=1):
+            seg_id = id_list[idx]
+            segment_probs = probs[idx]
+            main_score = logits[idx][main_prompt_index]  # score for the main prompt
+            line = f"  {rank}. Segment ID: {seg_id}, {main_prompt_name} with score: {main_score:.4f}"
+            if rank == 1:
+                rospy.loginfo(f"{GREEN}{line}{RESET}") # first line with color
+            else:
+                rospy.loginfo(line)
+
+            for prompt, prob in zip(self.text_prompts, segment_probs):
+                rospy.loginfo(f"       {prompt}: {prob * 100:.2f}%")
+
 
         self.current_segments.clear()
-
 
 
 
@@ -136,7 +136,7 @@ class CLIPNode:
         id_list = []
 
         for seg_id, img in sorted(segments.items()):
-            pil_img = PILImage.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             tensor = self.preprocess(pil_img).unsqueeze(0)
             image_tensors.append(tensor)
             id_list.append(seg_id)

@@ -8,7 +8,7 @@
     "communication": [
       "a person is talking on the phone",
       "a person is speaking to someone",
-      "a person is gesturing while talking",
+      "a person is gesturing",
       "a person is pointing at something"
     ],
     "movement": [
@@ -24,18 +24,6 @@
       "a person is placing something down",
       "a person is using a tool",
       "a person is touching a screen"
-    ],
-    "emotions": [
-      "a person looks angry",
-      "a person looks happy",
-      "a person is confused",
-      "a person is frightened"
-    ],
-    "aggression": [
-      "a person is attacking",
-      "a person is about to punch",
-      "a person is holding a weapon",
-      "a person is in a fighting stance"
     ],
     "cooperation": [
       "a person is helping someone",
