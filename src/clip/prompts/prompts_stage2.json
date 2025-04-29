@@ -1,0 +1,20 @@
+{
+    "standing": [
+      "a standing person is pointing at something",
+      "a standing person is waving",
+      "a standing person is waiting"
+    ],
+    "sitting": [
+      "a sitting person is using a phone",
+      "a sitting person is reading a book",
+      "a sitting person is resting"
+    ],
+    "crouching": [
+      "a crouching person is picking something up",
+      "a crouching person is tying their shoe"
+    ],
+    "lying_down": [
+      "a lying down person is sleeping",
+      "a lying down person is looking at the sky"
+    ]
+  }

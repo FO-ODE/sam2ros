@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="clip" type="clip_stage1_node.py" name="clip_stage1_node" output="screen" />
+    <node pkg="clip" type="clip_stage2_node.py" name="clip_stage2_node" output="screen" />
+    <node pkg="clip" type="behavior_fusion_node.py" name="behavior_fusion_node" output="screen" />
+</launch>

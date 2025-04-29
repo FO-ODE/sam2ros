@@ -3,12 +3,11 @@
       "a person is waving",
       "a person is shaking hands",
       "a person is bowing",
-      "a person is raising their hand"
+      "a person is raising the hand"
     ],
     "communication": [
       "a person is talking on the phone",
       "a person is speaking to someone",
-      "a person is gesturing",
       "a person is pointing at something"
     ],
     "movement": [

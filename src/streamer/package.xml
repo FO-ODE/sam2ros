@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mp4_streamer</name>
+  <name>streamer</name>
   <version>0.0.0</version>
-  <description>The mp4_streamer package</description>
+  <description>The streamer package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
