@@ -1,0 +1,36 @@
+{
+    "a person is moving": [
+      "a person is trying to find something",
+      "a person is about to sit down",
+      "a person is standing up from a chair"
+    ],
+    "a person is walking": [
+       "a person is walking"
+    ],
+    "a person is standing still": [
+      "a person is waiting for something",
+      "a person is talking to someone",
+      "a person is using a door",
+      "a person is reading a book",
+      "a person is using a computer",
+      "a person is using a phone",
+      "a person is eating",
+      "a person is drinking",
+      "a person is talking to someone",
+      "a person is watching TV"
+    ],
+    "a person is sitting still": [
+      "a person is reading a book",
+      "a person is using a computer",
+      "a person is using a phone",
+      "a person is eating",
+      "a person is drinking",
+      "a person is talking to someone",
+      "a person is watching TV"
+    ],
+    "a person is laying still": [
+      "a person is sleeping",
+      "a person is still awaken"
+    ]
+  }
+  

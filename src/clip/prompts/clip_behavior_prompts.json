@@ -9,7 +9,8 @@
       "a person is talking on the phone",
       "a person is speaking to someone",
       "a person is gesturing",
-      "a person is pointing at something"
+      "a person is pointing at something with fingers",
+      "a person is raising their fist"
     ],
     "movement": [
       "a person is walking",
@@ -31,4 +32,3 @@
       "a person is working together with others"
     ]
   }
-  

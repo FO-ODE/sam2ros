@@ -29,8 +29,8 @@ class CLIPNode:
         self.current_segments = {}
 
         ################################################################################ parameters
-        # self.text_prompts = ["a man pointing at something", "a man sitting on the floor"]  # prompts to compare with
-        json_path = os.path.join(script_dir, "..", "prompts", "clip_behavior_prompts.json")
+        # json_path = os.path.join(script_dir, "..", "prompts", "clip_behavior_prompts.json")
+        json_path = os.path.join(script_dir, "..", "prompts", "prompts_temp.json")
 
         with open(json_path, "r") as f:
             prompt_dict = json.load(f)

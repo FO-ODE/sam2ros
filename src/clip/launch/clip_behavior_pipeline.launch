@@ -1,0 +1,17 @@
+<launch>
+  <!-- 第一层：动态静态分类 -->
+  <node pkg="clip" type="clip_1_motion_state_node.py" name="clip_motion_state_node" output="screen">
+    <param name="detection_rate" value="1.0" /> <!-- in Hz -->
+  </node>
+
+  <!-- 第二层：大类别动作识别 -->
+  <node pkg="clip" type="clip_2_action_group_node.py" name="clip_action_group_node" output="screen" />
+
+  <!-- 第三层：细粒度动作理解 -->
+  <node pkg="clip" type="clip_3_fine_action_node.py" name="clip_fine_action_node" output="screen" />
+
+  <!-- 最终融合节点 -->
+  <node pkg="clip" type="clip_4_final_fusion_node.py" name="final_fusion_node" output="screen" />
+
+
+</launch>

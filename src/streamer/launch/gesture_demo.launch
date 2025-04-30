@@ -1,0 +1,12 @@
+<launch>
+    <node pkg="video_stream_opencv" type="video_stream" name="video_stream" output="screen" respawn="false">
+        <param name="video_stream_provider" value="/catkin_ws/src/test/Charades/tmp/gesture.mp4" />
+        <!-- <param name="fps" value="30" /> -->
+        <!-- <param name="width" value="640" /> -->
+        <!-- <param name="height" value="480" /> -->
+        <param name="flip_horizontal" value="false" />
+        <!-- <param name="flip_vertical" value="false" /> -->
+        <param name="loop_videofile" value="true" />
+        <remap from="/image_raw" to="/xtion/rgb/image_raw" />
+    </node>
+</launch>

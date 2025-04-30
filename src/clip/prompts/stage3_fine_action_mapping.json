@@ -1,0 +1,17 @@
+{
+    "sitting": [
+      "a person sitting and using a phone",
+      "a person sitting and reading a book",
+      "a person sitting and sleeping"
+    ],
+    "standing": [
+      "a person standing and waving",
+      "a person standing and pointing at something"
+    ],
+    "walking": [
+      "a person walking quickly",
+      "a person walking slowly",
+      "a person pacing nervously"
+    ]
+  }
+  
