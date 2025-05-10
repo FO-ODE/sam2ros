@@ -6,7 +6,7 @@ import rospy
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
-from sam2ros_msgs.msg import SegmentMask
+from sam2ros_msgs.msg import SegmentMask 
 import torch
 import clip
 from sensor_msgs.msg import Image
@@ -48,7 +48,7 @@ class CLIPNode:
 
         # rospy.Subscriber("/xtion/rgb/image_raw", Image, self.mask_callback, queue_size=10)
         rospy.Subscriber("/ultralytics/person_crop/image", Image, self.mask_callback, queue_size=10)
-        rospy.loginfo(f"CLIP Node started, using device: {self.device}")
+        rospy.loginfo(f"CLIP Node initialized, using device: {self.device}")
         self.loop()
 
 

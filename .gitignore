@@ -1,4 +1,7 @@
 .catkin_tools
+build
+devel
+logs
 
 # 忽略 SAM2 PyTorch 模型
 *.pt 

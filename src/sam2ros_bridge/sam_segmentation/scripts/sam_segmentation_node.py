@@ -145,8 +145,7 @@ class SamSegmentationNode:
 
         self.bridge = CvBridge()
         
-        rospy.loginfo("SAM Segmentation Node Initialized")
-        rospy.loginfo(f"Using device: {self.device}")
+        rospy.loginfo(f"SAM Segmentation Node Initialized, using device: {self.device}")
         rospy.loginfo(f"Using model: {self.model_name}")
         rospy.spin()
 
