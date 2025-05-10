@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>sam2_segmentation</name>
+  <name>sam_segmentation</name>
   <version>0.0.0</version>
-  <description>The sam2_segmentation package</description>
+  <description>The sam_segmentation package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

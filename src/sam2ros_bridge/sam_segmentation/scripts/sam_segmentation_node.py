@@ -5,22 +5,21 @@ import cv2
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
 from cv_bridge import CvBridge
 from ultralytics import SAM
+from ultralytics.engine.results import Results
 from pathlib import Path
 from sam2ros_msgs.msg import SegmentMask
 
-# # 系统ROS Python路径
-# import sys
-# sys.path.append('/opt/ros/noetic/lib/python3/dist-packages') 
 
 
-def process_with_sam2(input_image, model):
+def process_with_sam(input_image, model):
     
     start_time = time.time()
-    results = model(input_image, verbose=False)[0] # [0]: first image processed by SAM2
+    results = model(input_image, verbose=False)[0] # [0]: first image processed by SAM
     # verbose=False: suppresses the output of the model in terminal
     time_used = (time.time() - start_time) * 1000 # in [ms]
     time_used = round(time_used, 2)
@@ -116,22 +115,27 @@ def display_segmented_objects_grid(objects, win_name="Segmented Objects", max_co
 
     cv2.imshow(win_name, canvas)
     cv2.waitKey(1)
+    
+    
 
-
-
-class Sam2SegmentationNode:
+class SamSegmentationNode:
     def __init__(self):
-        rospy.init_node("sam2_segmentation_node", anonymous=True)
+        rospy.init_node("sam_segmentation_node", anonymous=True)
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         model_path = os.path.join(current_dir, "../../SAM_models/sam2.1_b.pt")  
         model_path = os.path.abspath(model_path)
-        # 'mobile_sam.pt',              'sam_b.pt',    'sam_l.pt',  'sam_h.pt',    
+        # 'mobile_sam.pt',              'sam_b.pt',    'sam_l.pt',
         # 'sam2_t.pt',   'sam2_s.pt',   'sam2_b.pt',   'sam2_l.pt', 
         # 'sam2.1_t.pt', 'sam2.1_s.pt', 'sam2.1_b.pt', 'sam2.1_l.pt'
         
+        if torch.cuda.is_available():
+            self.device = 'cuda'
+        else:
+            self.device = 'cpu'
+        
         self.model = SAM(model_path)
-        self.model.to('cuda:0')
+        self.model.to(self.device)
         self.model_name = Path(model_path).stem
         self.frame_seq = 0
 
@@ -141,7 +145,8 @@ class Sam2SegmentationNode:
 
         self.bridge = CvBridge()
         
-        rospy.loginfo("SAM2 Segmentation Node Initialized")
+        rospy.loginfo("SAM Segmentation Node Initialized")
+        rospy.loginfo(f"Using device: {self.device}")
         rospy.loginfo(f"Using model: {self.model_name}")
         rospy.spin()
 
@@ -149,7 +154,7 @@ class Sam2SegmentationNode:
     def image_callback(self, msg):
         try:
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-            segmented_image, segments, time_used = process_with_sam2(input_image, self.model)
+            segmented_image, segments, time_used = process_with_sam(input_image, self.model)
             self.frame_seq += 1
             rospy.loginfo(f"[{self.model_name}], 当前帧为{self.frame_seq}, 检测到 {len(segments)} 个目标, 消耗的时间为{time_used}[ms]。")
 
@@ -197,4 +202,4 @@ class Sam2SegmentationNode:
             rospy.logerr(f"error: {e}")
 
 if __name__ == "__main__":
-    Sam2SegmentationNode()
+    SamSegmentationNode()

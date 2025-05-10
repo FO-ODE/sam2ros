@@ -1,6 +1,3 @@
-build
-devel
-logs
 .catkin_tools
 
 # 忽略 SAM2 PyTorch 模型

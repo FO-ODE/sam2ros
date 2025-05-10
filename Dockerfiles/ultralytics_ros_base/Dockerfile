@@ -52,4 +52,4 @@ CMD [ "bash" ]
 # docker build -t foode258/ultralytics_ros_base:envtest .
 
 # 9. 运行容器 docker or with rocker
-# docker run -it --rm --gpus all --name sam_container foode258/sam_ros_base:env
+# docker run -it --rm --gpus all --name ultralytics_container foode258/ultralytics_ros_base:env
