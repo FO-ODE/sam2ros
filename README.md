@@ -87,7 +87,7 @@ rosservice call /pal_map_manager/change_map "input: '2025-01-30_124458'"
 
 Topics to be recorded in: `Tutorial4_ws2425.pdf`
 
-Record the rosbag in `ssh`, example:
+Record the rosbag in ssh, example:
 
 ```bash
 # please record the bag in /tmp
@@ -99,7 +99,7 @@ pal@tiago-46c:/tmp$ rosbag record \
 /xtion/rgb/camera_info \
 ```
 
-Copy the file from remote back to `host`, example:
+Copy the file from remote back to host, example:
 
 ```bash
 scp pal@tiago-46c:/tmp/2024-12-18-15-59-40.bag ~/Documents
