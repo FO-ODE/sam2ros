@@ -1,6 +1,6 @@
 <launch>
     <node pkg="video_stream_opencv" type="video_stream" name="video_stream" output="screen" respawn="false">
-        <param name="video_stream_provider" value="/catkin_ws/src/test/Charades/tmp/0BNML.mp4" />
+        <param name="video_stream_provider" value="/catkin_ws/src/test/Charades/0BNML.mp4" />
         <!-- <param name="fps" value="30" /> -->
         <!-- <param name="width" value="640" /> -->
         <!-- <param name="height" value="480" /> -->

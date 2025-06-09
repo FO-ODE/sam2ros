@@ -9,10 +9,12 @@ def main():
     pub = rospy.Publisher('/xtion/image_raw', Image, queue_size=10)
     bridge = CvBridge()
 
-    img = cv2.imread('/catkin_ws/src/test/test_images/left_hand.png')
+    img = cv2.imread('/catkin_ws/src/test/test_images/goods.png')
+    
     if img is None:
         rospy.logerr("Image not found!")
-        return
+    else:        
+        rospy.loginfo("Image loaded successfully.")
 
     rate = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
