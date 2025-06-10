@@ -77,34 +77,107 @@ class MediaPipePosePostureNode:
             return "unknown"
 
 
+    # def judge_gesture(self, hand_landmarks):
+    #     palm = hand_landmarks.landmark[0]
+    #     tip_ids = {
+    #         "index": 8,
+    #         "middle": 12,
+    #         "ring": 16,
+    #         "pinky": 20
+    #     }
+
+    #     def dist(a, b):
+    #         return np.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
+
+    #     index_tip_dist = dist(hand_landmarks.landmark[tip_ids["index"]], palm)
+    #     middle_tip_dist = dist(hand_landmarks.landmark[tip_ids["middle"]], palm)
+    #     ring_tip_dist = dist(hand_landmarks.landmark[tip_ids["ring"]], palm)
+    #     pinky_tip_dist = dist(hand_landmarks.landmark[tip_ids["pinky"]], palm)
+
+    #     # 经验阈值，可能需要根据图像大小微调
+    #     if (index_tip_dist > 0.05 and  # 食指伸出
+    #         middle_tip_dist < 0.10 and
+    #         ring_tip_dist < 0.10 and
+    #         pinky_tip_dist < 0.10):
+    #         return "Pointing"
+
+    #     elif all(dist(hand_landmarks.landmark[tip_ids[finger]], palm) < 0.05  # 所有手指都靠近掌心
+    #             for finger in tip_ids):
+    #         return "Fist"
+
+    #     else:
+    #         return "Open hand"
+    
+
     def judge_gesture(self, hand_landmarks):
         palm = hand_landmarks.landmark[0]
+        
+        # 食指的关键点索引
+        index_joints = {
+            "mcp": 5,   # 掌指关节 (metacarpophalangeal)
+            "pip": 6,   # 近指间关节 (proximal interphalangeal) 
+            "dip": 7,   # 远指间关节 (distal interphalangeal)
+            "tip": 8    # 指尖
+        }
+        
+        # 其他手指指尖
         tip_ids = {
-            "index": 8,
             "middle": 12,
             "ring": 16,
             "pinky": 20
         }
-
+        
         def dist(a, b):
             return np.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
-
-        index_tip_dist = dist(hand_landmarks.landmark[tip_ids["index"]], palm)
-        middle_tip_dist = dist(hand_landmarks.landmark[tip_ids["middle"]], palm)
-        ring_tip_dist = dist(hand_landmarks.landmark[tip_ids["ring"]], palm)
-        pinky_tip_dist = dist(hand_landmarks.landmark[tip_ids["pinky"]], palm)
-
-        # 经验阈值，可能需要根据图像大小微调
-        if (index_tip_dist > 0.15 and  # 食指伸出
-            middle_tip_dist < 0.10 and
-            ring_tip_dist < 0.10 and
-            pinky_tip_dist < 0.10):
+        
+        def calculate_angle(p1, p2, p3):
+            """计算三点之间的夹角，p2为顶点"""
+            # 创建向量
+            v1 = np.array([p1.x - p2.x, p1.y - p2.y])
+            v2 = np.array([p3.x - p2.x, p3.y - p2.y])
+            
+            # 计算角度
+            cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+            # 防止数值误差导致的domain error
+            cos_angle = np.clip(cos_angle, -1.0, 1.0)
+            angle = np.arccos(cos_angle)
+            return np.degrees(angle)  # 转换为度数
+        
+        # 检查食指是否伸直
+        def is_index_straight():
+            # 计算食指各关节的角度
+            mcp_joint = hand_landmarks.landmark[index_joints["mcp"]]
+            pip_joint = hand_landmarks.landmark[index_joints["pip"]]
+            dip_joint = hand_landmarks.landmark[index_joints["dip"]]
+            tip_joint = hand_landmarks.landmark[index_joints["tip"]]
+            
+            # 计算关节角度
+            pip_angle = calculate_angle(mcp_joint, pip_joint, dip_joint)
+            dip_angle = calculate_angle(pip_joint, dip_joint, tip_joint)
+            
+            # 如果角度接近180度（伸直），则认为是pointing
+            # 阈值可以根据需要调整
+            straight_threshold = 160  # 度数
+            
+            return pip_angle > straight_threshold and dip_angle > straight_threshold
+        
+        # 检查其他手指是否弯曲
+        def are_other_fingers_bent():
+            bent_threshold = 0.08  # 距离阈值，可根据需要调整
+            
+            middle_bent = dist(hand_landmarks.landmark[tip_ids["middle"]], palm) < bent_threshold
+            ring_bent = dist(hand_landmarks.landmark[tip_ids["ring"]], palm) < bent_threshold  
+            pinky_bent = dist(hand_landmarks.landmark[tip_ids["pinky"]], palm) < bent_threshold
+            
+            # 至少两个手指弯曲就认为是pointing姿势
+            return sum([middle_bent, ring_bent, pinky_bent]) >= 2
+        
+        # 判断手势
+        if is_index_straight() and are_other_fingers_bent():
             return "Pointing"
-
-        elif all(dist(hand_landmarks.landmark[tip_ids[finger]], palm) < 0.10  # 所有手指都靠近掌心
-                for finger in tip_ids):
-            return "Fist"
-
+        # elif all(dist(hand_landmarks.landmark[tip_ids[finger]], palm) < 0.07
+        #         for finger in tip_ids):
+        #     return "Fist"
         else:
             return "Open hand"
 
@@ -148,7 +221,7 @@ class MediaPipePosePostureNode:
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3, cv2.LINE_AA)
         
         cv2.putText(cv_image, f"Gesture: {gesture}", (30, 90),
-            cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 0, 0), 2, cv2.LINE_AA)
+            cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 0, 0), 3, cv2.LINE_AA)
 
         
         self.posture_pub.publish(posture)

@@ -22,6 +22,15 @@ rocker --nvidia --x11 --privileged \
     foode258/clip_ros_base:env1.0
 ```
 
+### Tiago
+
+```bash
+rocker --nvidia --x11 --privileged \
+    --network host \
+    --name tiago_container \
+    palroboticssl/tiago_tutorials:noetic
+```
+
 ## Useful Commands
 
 ```bash
@@ -81,6 +90,18 @@ rosrun rviz rviz -d'rospack find tiago_2dnav'/config/rviz/navigation.rviz
 rosservice call /pal_map_manager/change_map "input: '2025-01-30_124458'"
 ```
 
+### Tiago RViz
+
+if you are using rosbag
+
+```bash
+# 先生成带gripper的URDF
+rosrun xacro xacro `rospack find tiago_description`/robots/tiago.urdf.xacro end_effector:=pal-gripper > /tmp/tiago_gripper.urdf
+
+# 然后启动display
+roslaunch urdf_tutorial display.launch model:=/tmp/tiago_gripper.urdf
+```
+
 ## Others
 
 ### Rosbag Record
@@ -91,12 +112,15 @@ Record the rosbag in ssh, example:
 
 ```bash
 # please record the bag in /tmp
-pal@tiago-46c:/tmp$ rosbag record \
+# pal@tiago-46c:/tmp$ rosbag record
+
+rosbag record \
 /tf \
 /tf_static \
 /xtion/rgb/image_raw \
-/xtion/depth_registered/image \
 /xtion/rgb/camera_info \
+/xtion/depth_registered/image \
+/throttle_filtering_points/filtered_points \
 ```
 
 Copy the file from remote back to host, example:
