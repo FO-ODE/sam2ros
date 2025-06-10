@@ -61,7 +61,7 @@ class CLIPNode:
     def mask_callback(self, msg):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")  # 直接用 msg
-            frame_seq = rospy.Time.now().to_nsec()  # 你原来用 frame_seq，这里没有，就用时间戳代替吧
+            frame_seq = rospy.Time.now().to_nsec()  # 用时间戳代替 frame_seq
 
             if self.current_frame_seq != frame_seq:
                 self.current_frame_seq = frame_seq
@@ -170,7 +170,7 @@ class CLIPNode:
             f"[Frame {self.current_frame_seq}] Best Segment ID: {best_seg_id}, Score: {best_score:.4f}"
         )
 
-        # 打印一次就清空，避免重复
+        # 打印一次就清空，避免重复打印
         self.current_segments.clear()
 
 if __name__ == '__main__':

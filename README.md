@@ -94,7 +94,7 @@ Record the rosbag in ssh, example:
 pal@tiago-46c:/tmp$ rosbag record \
 /tf \
 /tf_static \
-/xtion/rgb/image_raw\
+/xtion/rgb/image_raw \
 /xtion/depth_registered/image \
 /xtion/rgb/camera_info \
 ```

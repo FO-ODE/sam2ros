@@ -21,8 +21,7 @@ def process_with_sam(input_image, model):
     start_time = time.time()
     results = model(input_image, verbose=False)[0] # [0]: first image processed by SAM
     # verbose=False: suppresses the output of the model in terminal
-    time_used = (time.time() - start_time) * 1000 # in [ms]
-    time_used = round(time_used, 2)
+    time_used = round((time.time() - start_time) * 1000) # [ms]
     
     # print(type(results))       # <class 'ultralytics.engine.results.Results'>
     seg_vis = results.plot()
@@ -140,7 +139,7 @@ class SamSegmentationNode:
         self.frame_seq = 0
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
-        self.image_pub = rospy.Publisher("/xtion/rgb/sam_segment", Image, queue_size=10)  # for RVIZ
+        self.image_pub = rospy.Publisher("/xtion/rgb/sam_segment", Image, queue_size=10)  # for visualization
         self.mask_pub = rospy.Publisher("/sam2ros/sam_segment", SegmentMask, queue_size=50) # if queue_size=1, cannot publish all messages
 
         self.bridge = CvBridge()
@@ -155,7 +154,7 @@ class SamSegmentationNode:
             input_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
             segmented_image, segments, time_used = process_with_sam(input_image, self.model)
             self.frame_seq += 1
-            rospy.loginfo(f"[{self.model_name}], 当前帧为{self.frame_seq}, 检测到 {len(segments)} 个目标, 消耗的时间为{time_used}[ms]。")
+            rospy.loginfo(f"Frame: {self.frame_seq}, Detected targets: {len(segments)}, Timecost: {time_used}[ms]")
 
             # 拼接 原图 & 分割图 ==> combined_image
             h1, w1 = input_image.shape[:2]
@@ -166,9 +165,9 @@ class SamSegmentationNode:
             ######################################################## control the top-up fenster
             # cv2.imshow("Original Image", input_image)
             # cv2.imshow("Segmented Image", segmented_image)
-            combined_image = np.hstack((input_image, segmented_image))
-            cv2.imshow("Original | Segmented", combined_image)
-            cv2.waitKey(1)
+            # combined_image = np.hstack((input_image, segmented_image))
+            # cv2.imshow("Original | Segmented", combined_image)
+            # cv2.waitKey(1)
             # display_with_subplots(segments) # slower, with matplotlib
             # display_segmented_objects_grid(segments) # faster, with opencv
             ######################################################## control the top-up fenster
@@ -178,7 +177,7 @@ class SamSegmentationNode:
             self.image_pub.publish(self.bridge.cv2_to_imgmsg(segmented_image, "bgr8"))
             
             
-            # segment_id=0 原图 
+            # segment_id=0, original image with mask
             msg_segmented_image = SegmentMask()
             msg_segmented_image.header = msg.header
             msg_segmented_image.mask_image = self.bridge.cv2_to_imgmsg(segmented_image, "bgr8")
@@ -186,7 +185,7 @@ class SamSegmentationNode:
             msg_segmented_image.frame_seq = self.frame_seq
             self.mask_pub.publish(msg_segmented_image)
 
-            # 发布裁剪结果
+            # pubslish each segment
             for obj in segments:
                 segment_msg = SegmentMask()
                 segment_msg.header = msg.header
