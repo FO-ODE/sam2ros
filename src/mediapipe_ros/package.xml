@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mediapipe_pose</name>
+  <name>mediapipe_ros</name>
   <version>0.0.0</version>
-  <description>The mediapipe_pose package</description>
+  <description>The mediapipe_ros package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
