@@ -176,6 +176,8 @@ roi:
 
 ## Usage
 
+### For Posture Recognition & Pointing at Objects
+
 in ultralytics_container
 
 ```bash
@@ -185,5 +187,21 @@ rosrun mediapipe_ros arm_stability_detector.py
 
 rosrun mediapipe_ros cylinder_pointcloud_filter.py
 
+rosrun mediapipe_ros pointcloud_to_image.py
+```
 
+### For Object Segmentation & Zero Shot Detection
+
+in ultralytics_container
+
+```bash
+rosrun sam_segmentation sam_segmentation_node.py
+```
+
+in clip_container
+
+```bash
+rosrun clip clip_segment_matcher.py 
+
+rosrun clip clip_query_input_node.py
 ```
