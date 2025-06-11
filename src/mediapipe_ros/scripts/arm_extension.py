@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 import cv2
-import mediapipe as mp
+import mediapipe as mp # type: ignore
 import numpy as np
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
