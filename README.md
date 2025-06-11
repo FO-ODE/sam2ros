@@ -117,8 +117,11 @@ Record the rosbag in ssh, example:
 rosbag record \
 /tf \
 /tf_static \
+/clock \
 /xtion/rgb/image_raw \
 /xtion/rgb/camera_info \
+/xtion/depth/camera_info \
+/xtion/depth_registered/camera_info \
 /xtion/depth_registered/image \
 /throttle_filtering_points/filtered_points \
 ```
@@ -132,4 +135,32 @@ scp pal@tiago-46c:/tmp/2024-12-18-15-59-40.bag ~/Documents
 zby@ub2004:~$ scp pal@tiago-46c:/tmp/2024-12-18-15-52-52.bag ~/Documents
 pal@tiago-46c's password:
 2024-12-18-15-52-52.bag                       100%  390MB   2.0MB/s   03:18  
+```
+
+### Camera Info
+
+```bash
+header: 
+  seq: 3696
+  stamp: 
+    secs: 1749598854
+    nsecs: 447469523
+  frame_id: "xtion_rgb_optical_frame"
+height: 480
+width: 640
+distortion_model: "plumb_bob"
+D: [0.05885243042898163, -0.08343080029493587, 0.004227265808599358, -0.001760150057091595, 0.0]
+K: [579.7253645876941, 0.0, 329.1726287752489, 0.0, 581.0305537009599, 252.8879914424264, 0.0, 0.0, 1.0]
+R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+P: [586.369140625, 0.0, 327.6738649184117, 0.0, 0.0, 586.5962524414062, 254.1431469189192, 0.0, 0.0, 0.0, 1.0, 0.0]
+binning_x: 0
+binning_y: 0
+roi: 
+  x_offset: 0
+  y_offset: 0
+  height: 0
+  width: 0
+  do_rectify: False
+---
+
 ```
