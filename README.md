@@ -80,6 +80,16 @@ rostopic pub /test_topic std_msgs/String "data: 'test'"
 rostopic echo /test_topic
 ```
 
+### Timer Synchronization
+
+```bash
+# sudo apt install ntpdate
+sudo ntpdate 192.168.1.200
+
+# check the date
+watch -n 0.1 date
+```
+
 ### Tiago Navigation & Map
 
 ```bash
@@ -162,5 +172,4 @@ roi:
   width: 0
   do_rectify: False
 ---
-
 ```
