@@ -102,7 +102,7 @@ rosservice call /pal_map_manager/change_map "input: '2025-01-30_124458'"
 
 ### Tiago RViz
 
-if you are using rosbag
+if you are using `rosbag`
 
 ```bash
 # 先生成带gripper的URDF
@@ -178,7 +178,7 @@ roi:
 
 ### For Posture Recognition & Pointing at Objects
 
-in ultralytics_container
+in `ultralytics_container`
 
 ```bash
 rosrun mediapipe_ros arm_extension.py
@@ -192,13 +192,13 @@ rosrun mediapipe_ros pointcloud_to_image.py
 
 ### For Object Segmentation & Zero Shot Detection
 
-in ultralytics_container
+in `ultralytics_container`
 
 ```bash
 rosrun sam_segmentation sam_segmentation_node.py
 ```
 
-in clip_container
+in `clip_container`
 
 ```bash
 rosrun clip clip_segment_matcher.py 
