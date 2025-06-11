@@ -166,6 +166,8 @@ class ArmStabilityDetector:
 
         # 复制尺寸
         green_marker.scale = reference_marker.scale
+        green_marker.scale.x = reference_marker.scale.x * 2 # diameter
+        green_marker.scale.y = reference_marker.scale.y * 2 # diameter
 
         # 设置为绿色
         green_marker.color.r = 0.0
