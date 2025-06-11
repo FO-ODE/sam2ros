@@ -173,3 +173,17 @@ roi:
   do_rectify: False
 ---
 ```
+
+## Usage
+
+in ultralytics_container
+
+```bash
+rosrun mediapipe_ros arm_extension.py
+
+rosrun mediapipe_ros arm_stability_detector.py 
+
+rosrun mediapipe_ros cylinder_pointcloud_filter.py
+
+
+```

@@ -346,9 +346,19 @@ class CylinderPointCloudExtractor:
             header = original_header
             header.stamp = rospy.Time.now()
             
-            # 使用圆柱体的坐标系作为发布的坐标系
-            if self.cylinder_frame_id:
-                header.frame_id = self.cylinder_frame_id
+            # 强制使用 xtion_rgb_optical_frame 作为发布的坐标系
+            header.frame_id = "xtion_rgb_optical_frame"
+            
+            # 如果当前点云不在 xtion_rgb_optical_frame 中，需要转换回去
+            if self.cylinder_frame_id != "xtion_rgb_optical_frame":
+                # 将点云从圆柱体坐标系转换回 xtion_rgb_optical_frame
+                transformed_points = self.transform_points_to_target_frame(points, 
+                                                                         self.cylinder_frame_id, 
+                                                                         "xtion_rgb_optical_frame")
+                if transformed_points is not None:
+                    points = transformed_points
+                else:
+                    rospy.logwarn("Failed to transform points back to xtion_rgb_optical_frame, using original coordinates")
             
             # 创建点云
             internal_pc = pc2.create_cloud_xyz32(header, points)
@@ -361,12 +371,49 @@ class CylinderPointCloudExtractor:
         except Exception as e:
             rospy.logerr(f"Error publishing internal pointcloud: {e}")
 
+    def transform_points_to_target_frame(self, points, source_frame, target_frame):
+        """将点列表从源坐标系转换到目标坐标系"""
+        try:
+            # 获取变换
+            transform = self.tf_buffer.lookup_transform(
+                target_frame,
+                source_frame,
+                rospy.Time(0),
+                rospy.Duration(1.0)
+            )
+            
+            # 提取变换矩阵
+            t = transform.transform.translation
+            r = transform.transform.rotation
+            
+            # 转换为变换矩阵
+            from tf.transformations import quaternion_matrix, translation_matrix
+            
+            rotation_matrix = quaternion_matrix([r.x, r.y, r.z, r.w])
+            translation_matrix_4x4 = translation_matrix([t.x, t.y, t.z])
+            transform_matrix = np.dot(translation_matrix_4x4, rotation_matrix)
+            
+            # 转换所有点
+            transformed_points = []
+            for point in points:
+                # 应用变换
+                point_homogeneous = np.array([point[0], point[1], point[2], 1.0])
+                transformed_point = np.dot(transform_matrix, point_homogeneous)
+                transformed_points.append([transformed_point[0], transformed_point[1], transformed_point[2]])
+            
+            rospy.logdebug(f"Transformed {len(points)} points from {source_frame} to {target_frame}")
+            return transformed_points
+            
+        except Exception as e:
+            rospy.logerr(f"Failed to transform points from {source_frame} to {target_frame}: {e}")
+            return None
+
     def run(self):
         """运行节点"""
         rospy.loginfo("Cylinder PointCloud Extractor is running...")
         rospy.loginfo("Waiting for cylinder marker on /stable_arm_marker")
         rospy.loginfo("Waiting for pointcloud on /throttle_filtering_points/filtered_points")
-        rospy.loginfo("Will publish extracted points on /cylinder_internal_points")
+        rospy.loginfo("Will publish extracted points on /cylinder_internal_points in xtion_rgb_optical_frame")
         rospy.loginfo("Will publish endpoint markers on /cylinder_endpoints")
         rospy.spin()
 
