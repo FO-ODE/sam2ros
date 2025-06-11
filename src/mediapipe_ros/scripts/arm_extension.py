@@ -24,7 +24,7 @@ class MediaPipePosePostureNode:
         self.image_pub = rospy.Publisher("/mediapipe_pose/image", Image, queue_size=10)
         self.posture_pub = rospy.Publisher("/posture_status", String, queue_size=10)
         self.skeleton_pub = rospy.Publisher("/skeleton_markers", MarkerArray, queue_size=10)
-        self.arm_extension_pub = rospy.Publisher("/arm_extension_markers", MarkerArray, queue_size=10)
+        self.arm_extension_pub = rospy.Publisher("/arm_extension_marker", Marker, queue_size=10)
 
         # MediaPipe setup
         self.mp_pose = mp.solutions.pose
@@ -52,7 +52,7 @@ class MediaPipePosePostureNode:
         
         # Arm extension detection parameters
         self.arm_straightness_threshold = 20.0  # degrees, maximum deviation from straight line
-        self.cylinder_diameter = 0.20  # 20cm
+        self.cylinder_diameter = 0.10  # 20cm
         self.cylinder_length = 2.0     # 2m
         
         # Pose connections for visualization
@@ -254,7 +254,7 @@ class MediaPipePosePostureNode:
         marker.color.a = 0.6
         
         # 设置生存时间
-        marker.lifetime = rospy.Duration(0.5)
+        marker.lifetime = rospy.Duration(1.0)
         
         return marker
 
@@ -416,6 +416,7 @@ class MediaPipePosePostureNode:
                     marker.header.frame_id = self.frame_id
                 self.skeleton_pub.publish(skeleton_markers)
                 
+                
                 # 检测右手臂是否伸直
                 is_straight, wrist_point, arm_direction = self.is_right_arm_straight(landmarks_3d)
                 arm_straight = is_straight
@@ -423,32 +424,16 @@ class MediaPipePosePostureNode:
                 # 如果右手臂伸直，创建并发布圆柱体marker
                 if is_straight and wrist_point is not None and arm_direction is not None:
                     cylinder_marker = self.create_cylinder_marker(wrist_point, arm_direction, data.header)
-                    
-                    # 创建MarkerArray并发布
-                    arm_extension_markers = MarkerArray()
-                    
-                    # 先清除之前的markers
-                    delete_marker = Marker()
-                    delete_marker.header = data.header
-                    delete_marker.header.frame_id = self.frame_id
-                    delete_marker.ns = "arm_extension"
-                    delete_marker.action = Marker.DELETEALL
-                    arm_extension_markers.markers.append(delete_marker)
-                    
-                    # 添加圆柱体marker
-                    arm_extension_markers.markers.append(cylinder_marker)
-                    
-                    self.arm_extension_pub.publish(arm_extension_markers)
+                    self.arm_extension_pub.publish(cylinder_marker)
                 else:
                     # 如果手臂不直，发布删除marker
-                    arm_extension_markers = MarkerArray()
                     delete_marker = Marker()
                     delete_marker.header = data.header
                     delete_marker.header.frame_id = self.frame_id
                     delete_marker.ns = "arm_extension"
-                    delete_marker.action = Marker.DELETEALL
-                    arm_extension_markers.markers.append(delete_marker)
-                    self.arm_extension_pub.publish(arm_extension_markers)
+                    delete_marker.id = 0
+                    delete_marker.action = Marker.DELETE
+                    self.arm_extension_pub.publish(delete_marker)
 
         # 在图像上显示信息
         cv2.putText(cv_image, f"Posture: {posture}", (30, 50),
