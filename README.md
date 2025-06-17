@@ -56,7 +56,7 @@ roslaunch tiago_moveit_config moveit_rviz.launch config:=true
 **Tiago Webmanager**: <http://192.168.1.200:8080>
 
 ```bash
-# to asure the IP
+# to determine the IP address of the development computer
 ifconfig
 
 # Ethernet
