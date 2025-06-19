@@ -2,7 +2,7 @@
 
 ## Containers
 
-### Ultralytics + SAM + Mediapipe
+### Ultralytics + Mediapipe
 
 ```bash
 rocker --nvidia --x11 --privileged \

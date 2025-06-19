@@ -20,7 +20,9 @@ class YoloDetectionNode:
             path = os.path.join(model_dir, name)
             return YOLO(path).to("cuda"), os.path.splitext(name)[0]
 
-
+        # Load the tracker configuration
+        self.tracker_config = os.path.join(model_dir, "botsort.yaml")
+        
         self.det_model, self.det_model_name = load_model("yolo11m.pt")
         self.seg_model, self.seg_model_name = load_model("yolo11m-seg.pt")
         self.pos_model, self.pos_model_name = load_model("yolo11m-pose.pt")
@@ -43,9 +45,16 @@ class YoloDetectionNode:
         """Callback function to process image and publish annotated images."""
         """Detection, Segmentation, Pose"""
         input_image = ros_numpy.numpify(msg)
+        
         if self.det_image_pub.get_num_connections() or self.person_crop_pub.get_num_connections():
             # Perform detection
-            det_result = self.det_model(input_image)
+            # det_result = self.det_model(input_image)
+            det_result = self.det_model.track(
+                source=input_image,
+                persist=True,
+                tracker=self.tracker_config,
+                verbose=False
+            )
             det_annotated = det_result[0].plot(show=False)
             self.det_image_pub.publish(ros_numpy.msgify(Image, det_annotated, encoding="rgb8"))
             
@@ -53,20 +62,23 @@ class YoloDetectionNode:
             classes = det_result[0].boxes.cls.cpu().numpy().astype(int)
             names = [det_result[0].names[i] for i in classes]
             self.classes_pub.publish(String(data=str(names)))
-            
-            
-            # Extract person crops
-            for box, cls in zip(det_result[0].boxes.xyxy.cpu().numpy(), 
-                                det_result[0].boxes.cls.cpu().numpy().astype(int)):
 
+            # Extract IDs
+            if det_result[0].boxes.id is not None:
+                ids = det_result[0].boxes.id.cpu().numpy().astype(int)
+            else:
+                ids = [-1] * len(det_result[0].boxes.xyxy)
+
+            # Extract person crops
+            for box, cls, track_id in zip(det_result[0].boxes.xyxy.cpu().numpy(), 
+                                classes,
+                                ids):
                 if det_result[0].names[cls] == "person":
                     x1, y1, x2, y2 = map(int, box)
                     cropped_person = input_image[y1:y2, x1:x2].copy()
-
                     if cropped_person.size == 0:
                         continue
-
-                    self.person_crop_pub.publish(ros_numpy.msgify(Image, cropped_person, encoding="rgb8"))
+            self.person_crop_pub.publish(ros_numpy.msgify(Image, cropped_person, encoding="rgb8"))
 
 
         if self.seg_image_pub.get_num_connections():
@@ -76,7 +88,15 @@ class YoloDetectionNode:
             
             
         if self.pos_image_pub.get_num_connections():
-            pos_result = self.pos_model(input_image)
+            # 对pose model也应用tracking
+            pos_result = self.pos_model.track(
+                source=input_image,
+                persist=True,
+                tracker=self.tracker_config,
+                verbose=False
+            )
+            
+            # 直接使用YOLO自带的绘制，它会显示 "id:1 person 0.93" 格式
             pos_annotated = pos_result[0].plot(show=False)
             self.pos_image_pub.publish(ros_numpy.msgify(Image, pos_annotated, encoding="rgb8"))
             
