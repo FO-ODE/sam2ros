@@ -9,6 +9,9 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 import torch
+from sensor_msgs.msg import CameraInfo, PointCloud2, PointField
+import sensor_msgs.point_cloud2 as pc2
+from geometry_msgs.msg import PointStamped
 
 
 class YoloDetectionNode:
@@ -38,7 +41,11 @@ class YoloDetectionNode:
         self.latest_depth_image = None
         self.depth_sub = rospy.Subscriber("/xtion/depth/image_raw", Image, self.depth_callback, queue_size=1)
         self.depth_bbox_pub = rospy.Publisher("/ultralytics/pose/selected_person/depth_bbox", Image, queue_size=1)
-
+        
+        self.camera_info = None
+        self.camera_info_sub = rospy.Subscriber("/xtion/depth/camera_info", CameraInfo, self.camera_info_callback)
+        self.pointcloud_pub = rospy.Publisher("/ultralytics/pose/selected_person/pointcloud", PointCloud2, queue_size=1)
+        self.position_pub = rospy.Publisher("/adv_robocup/waving_person/position", PointStamped, queue_size=1)
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback, queue_size=1)
         self.det_image_pub = rospy.Publisher("/ultralytics/detection/image", Image, queue_size=1)
@@ -54,6 +61,9 @@ class YoloDetectionNode:
         rospy.loginfo(f"Pose model: {self.pos_model_name}")
         rospy.loginfo(f"Frame skipping - Det:{self.det_skip_frames}, Seg:{self.seg_skip_frames}, Pos:{self.pos_skip_frames}")
         rospy.spin()
+        
+    def camera_info_callback(self, msg):
+        self.camera_info = msg
 
     def detect_waving_gesture(self, keypoints, person_id):
         try:
@@ -83,6 +93,70 @@ class YoloDetectionNode:
             self.latest_depth_image = ros_numpy.numpify(msg)
         except Exception as e:
             rospy.logwarn(f"Failed to receive depth image: {e}")
+            
+    def publish_pointcloud_from_mask(self, depth_image, mask, x1, y1, camera_info_msg):
+        fx = camera_info_msg.K[0]
+        fy = camera_info_msg.K[4]
+        cx = camera_info_msg.K[2]
+        cy = camera_info_msg.K[5]
+
+        points = []
+
+        for v in range(mask.shape[0]):
+            for u in range(mask.shape[1]):
+                if mask[v, u] == 1:
+                    depth = depth_image[y1 + v, x1 + u].astype(np.float32) / 1000.0  # mm → m
+                    if depth == 0 or np.isnan(depth):  # 无效点
+                        continue
+
+                    z = depth
+                    x = (u + x1 - cx) * z / fx
+                    y = (v + y1 - cy) * z / fy
+
+                    points.append([x, y, z])
+
+        # 创建 PointCloud2 消息
+        header = rospy.Header()
+        header.stamp = rospy.Time.now()
+        header.frame_id = camera_info_msg.header.frame_id
+
+        cloud_msg = pc2.create_cloud_xyz32(header, points)
+        self.pointcloud_pub.publish(cloud_msg)
+        
+        # === 计算并发布平均位置 ===
+        self.compute_and_publish_average_position(points, frame_id=camera_info_msg.header.frame_id)
+        
+    def compute_and_publish_average_position(self, points, frame_id="camera_link"):
+        if len(points) < 10:
+            rospy.logwarn("Too few points to compute position.")
+            return
+
+        # 转为 numpy 数组
+        pts = np.array(points)  # shape: (N, 3)
+
+        # Step 1: 计算几何中心
+        center = np.mean(pts, axis=0)
+
+        # Step 2: 计算每个点到中心的距离
+        dists = np.linalg.norm(pts - center, axis=1)
+
+        # Step 3: 按距离排序，保留前80%
+        num_keep = int(len(pts) * 0.8)
+        indices = np.argsort(dists)[:num_keep]
+        filtered_pts = pts[indices]
+
+        # Step 4: 计算均值
+        avg = np.mean(filtered_pts, axis=0)
+
+        # Step 5: 发布
+        msg = PointStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = frame_id
+        msg.point.x = float(avg[0])
+        msg.point.y = float(avg[1])
+        msg.point.z = float(avg[2])
+
+        self.position_pub.publish(msg)
 
     def image_callback(self, msg):
         self.frame_counter += 1
@@ -201,7 +275,15 @@ class YoloDetectionNode:
 
                     # === 叠加 segmentation mask ===
                     if seg_result and seg_result[0].masks is not None:
-                        mask_tensor = seg_result[0].masks.data[0]
+                        mask_tensor = None
+                        class_names = seg_result[0].names
+                        classes = seg_result[0].boxes.cls.cpu().numpy().astype(int)
+
+                        for i, cls in enumerate(classes):
+                            if class_names[cls] == "person":
+                                mask_tensor = seg_result[0].masks.data[i]
+                                break  # 找到第一个人就停止
+
                         mask_np = mask_tensor.cpu().numpy().astype(np.uint8)
 
                         mask_color = np.zeros((mask_np.shape[0], mask_np.shape[1], 3), dtype=np.uint8)
@@ -250,6 +332,13 @@ class YoloDetectionNode:
                     # 发布带框 + mask 的深度图
                     depth_image_msg = ros_numpy.msgify(Image, depth_vis, encoding="rgb8")
                     self.depth_bbox_pub.publish(depth_image_msg)
+                    
+                # === 转点云并发布 ===
+                if self.camera_info is not None:
+                    try:
+                        self.publish_pointcloud_from_mask(self.latest_depth_image, mask_resized, x1, y1, self.camera_info)
+                    except Exception as e:
+                        rospy.logwarn(f"Failed to publish pointcloud: {e}")
 
 if __name__ == '__main__':
     yolo_detection_node = YoloDetectionNode()
