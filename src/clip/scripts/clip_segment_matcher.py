@@ -27,6 +27,7 @@ class CLIPSegmentMatcher:
         self.bridge = CvBridge()
         self.segment_cache = defaultdict(list)  # 存储每一帧的 segment 图像列表
         self.prompt = None
+        self.waiting_for_prompt_logged = False  # 标志，避免重复打印等待提示
 
         rospy.Subscriber("/adv_robocup/sam2clip/sam_segment_mask", SegmentMask, self.segment_callback)
         rospy.Subscriber("/adv_robocup/sam2clip/clip_query", String, self.prompt_callback)  # 可以通过这个 topic 动态设置提示词
@@ -35,15 +36,24 @@ class CLIPSegmentMatcher:
 
         rospy.loginfo("CLIP Segment Matcher Initialized")
         rospy.logwarn("Please send prompts to /adv_robocup/sam2clip/clip_query")
-        rospy.logwarn("Waiting for prompts...")
         rospy.spin()
 
     def prompt_callback(self, msg):
-        self.prompt = msg.data
-        rospy.loginfo(f"new prompt received: {self.prompt}")
+        new_prompt = msg.data
+        if new_prompt != self.prompt:  # 只有当prompt真的改变时才处理
+            self.prompt = new_prompt
+            self.waiting_for_prompt_logged = False  # 重置标志，因为已经收到了新的 prompt
+            rospy.loginfo(f"New prompt received: {self.prompt}")
 
     def segment_callback(self, msg):
         try:
+            # 检查是否有 prompt
+            if not self.prompt:
+                if not self.waiting_for_prompt_logged:
+                    rospy.logwarn(f"Waiting for prompt...")
+                    self.waiting_for_prompt_logged = True
+                return
+
             # 转换图像格式
             cv_img = self.bridge.imgmsg_to_cv2(msg.mask_image, desired_encoding="passthrough")
             if len(cv_img.shape) == 2:
@@ -88,6 +98,7 @@ class CLIPSegmentMatcher:
 
         except Exception as e:
             rospy.logerr(f"Error processing segment: {e}")
+            # 移除了重复的等待提示信息
 
 
 
