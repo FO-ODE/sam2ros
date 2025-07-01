@@ -27,7 +27,9 @@ class CLIPSegmentMatcher:
         self.bridge = CvBridge()
         self.segment_cache = defaultdict(list)  # 存储每一帧的 segment 图像列表
         self.prompt = None
-        self.waiting_for_prompt_logged = False  # 标志，避免重复打印等待提示
+        self.frame_timers = {}  # 每个frame_seq一个定时器
+
+
 
         rospy.Subscriber("/adv_robocup/sam2clip/sam_segment_mask", SegmentMask, self.segment_callback)
         rospy.Subscriber("/adv_robocup/sam2clip/clip_query", String, self.prompt_callback)  # 可以通过这个 topic 动态设置提示词
@@ -36,25 +38,47 @@ class CLIPSegmentMatcher:
 
         rospy.loginfo("CLIP Segment Matcher Initialized")
         rospy.logwarn("Please send prompts to /adv_robocup/sam2clip/clip_query")
+        rospy.logwarn("Waiting for prompts...")
         rospy.spin()
 
     def prompt_callback(self, msg):
         new_prompt = msg.data
         if new_prompt != self.prompt:  # 只有当prompt真的改变时才处理
             self.prompt = new_prompt
-            self.waiting_for_prompt_logged = False  # 重置标志，因为已经收到了新的 prompt
             rospy.loginfo(f"New prompt received: {self.prompt}")
+            
+    def process_frame(self, frame):
+        try:
+            if frame not in self.segment_cache or not self.segment_cache[frame]:
+                return
+
+            best_segment = max(self.segment_cache[frame], key=lambda x: x[1])
+            best_id, best_score = best_segment
+
+            rospy.loginfo(f"[frame {frame}] \"{self.prompt}\" ID: {best_id}, score: {best_score:.4f}")
+
+            if best_id in self.image_cache[frame]:
+                self.result_pub.publish(self.image_cache[frame][best_id])
+            else:
+                rospy.logwarn(f"Segment ID {best_id} not found in image cache for frame {frame}")
+
+            # 清理缓存和定时器
+            del self.segment_cache[frame]
+            del self.image_cache[frame]
+            if frame in self.frame_timers:
+                self.frame_timers[frame].shutdown()
+                del self.frame_timers[frame]
+
+        except Exception as e:
+            rospy.logerr(f"Error in process_frame: {e}")
+
 
     def segment_callback(self, msg):
         try:
-            # 检查是否有 prompt
-            if not self.prompt:
-                if not self.waiting_for_prompt_logged:
-                    rospy.logwarn(f"Waiting for prompt...")
-                    self.waiting_for_prompt_logged = True
-                return
+            frame = msg.frame_seq
+            seg_id = msg.segment_id
 
-            # 转换图像格式
+            # 图像转换
             cv_img = self.bridge.imgmsg_to_cv2(msg.mask_image, desired_encoding="passthrough")
             if len(cv_img.shape) == 2:
                 cv_img = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
@@ -63,7 +87,6 @@ class CLIPSegmentMatcher:
             else:
                 cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
 
-            # 预处理 + 编码
             pil_img = PILImage.fromarray(cv_img)
             img_tensor = self.preprocess(pil_img).unsqueeze(0).to(self.device)
 
@@ -75,30 +98,18 @@ class CLIPSegmentMatcher:
                 text_feature /= text_feature.norm(dim=-1, keepdim=True)
                 similarity = (image_feature @ text_feature.T).item()
 
-            frame = msg.frame_seq
-            seg_id = msg.segment_id
-
             self.segment_cache[frame].append((seg_id, similarity))
             self.image_cache[frame][seg_id] = msg.mask_image
 
-            # 如果收到了旧帧（即 frame_seq 变了），处理旧帧的最佳 segment
-            cached_frames = list(self.segment_cache.keys())
-            for f in cached_frames:
-                if f != frame:
-                    best_id, best_score = max(self.segment_cache[f], key=lambda x: x[1])
-                    rospy.loginfo(f"[frame {f}] \"{self.prompt}\" ID: {best_id}, score: {best_score:.4f}")
+            # 启动/重启定时器：100ms后触发该帧处理
+            if frame in self.frame_timers:
+                self.frame_timers[frame].shutdown()  # 停止旧定时器
 
-                    # 发布图像
-                    if best_id in self.image_cache[f]:
-                        self.result_pub.publish(self.image_cache[f][best_id])
-
-                    # 清除缓存
-                    del self.segment_cache[f]
-                    del self.image_cache[f]
+            self.frame_timers[frame] = rospy.Timer(rospy.Duration(0.2), lambda event, f=frame: self.process_frame(f), oneshot=True)
 
         except Exception as e:
-            rospy.logerr(f"Error processing segment: {e}")
-            # 移除了重复的等待提示信息
+            rospy.logwarn(f"Waiting for prompt...")
+
 
 
 
