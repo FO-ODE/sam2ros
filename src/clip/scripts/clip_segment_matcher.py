@@ -28,13 +28,13 @@ class CLIPSegmentMatcher:
         self.segment_cache = defaultdict(list)  # 存储每一帧的 segment 图像列表
         self.prompt = None
 
-        rospy.Subscriber("/sam2ros/sam_segment", SegmentMask, self.segment_callback)
-        rospy.Subscriber("/clip_query", String, self.prompt_callback)  # 可以通过这个 topic 动态设置提示词
-        self.result_pub = rospy.Publisher("/clip_segment_match/matched_image", Image, queue_size=10)
+        rospy.Subscriber("/adv_robocup/sam2clip/sam_segment_mask", SegmentMask, self.segment_callback)
+        rospy.Subscriber("/adv_robocup/sam2clip/clip_query", String, self.prompt_callback)  # 可以通过这个 topic 动态设置提示词
+        self.result_pub = rospy.Publisher("/adv_robocup/sam2clip/clip_matched_object", Image, queue_size=10)
         self.image_cache = defaultdict(dict)  # 保存每个 segment 的图像 {frame_seq: {segment_id: image}}
 
         rospy.loginfo("CLIP Segment Matcher Initialized")
-        rospy.logwarn("Please send prompts to /clip_query")
+        rospy.logwarn("Please send prompts to /adv_robocup/sam2clip/clip_query")
         rospy.logwarn("Waiting for prompts...")
         rospy.spin()
 

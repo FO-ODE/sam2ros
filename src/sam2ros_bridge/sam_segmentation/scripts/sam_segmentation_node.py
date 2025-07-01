@@ -138,9 +138,9 @@ class SamSegmentationNode:
         self.model_name = Path(model_path).stem
         self.frame_seq = 0
 
-        self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback)
-        self.image_pub = rospy.Publisher("/xtion/rgb/sam_segment", Image, queue_size=10)  # for visualization
-        self.mask_pub = rospy.Publisher("/sam2ros/sam_segment", SegmentMask, queue_size=50) # if queue_size=1, cannot publish all messages
+        self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback, queue_size=1)
+        self.image_pub = rospy.Publisher("/adv_robocup/sam2clip/sam_segment_visual", Image, queue_size=10)  # for visualization
+        self.mask_pub = rospy.Publisher("/adv_robocup/sam2clip/sam_segment_mask", SegmentMask, queue_size=50) # if queue_size=1, cannot publish all messages
 
         self.bridge = CvBridge()
         
@@ -156,21 +156,10 @@ class SamSegmentationNode:
             self.frame_seq += 1
             rospy.loginfo(f"Frame: {self.frame_seq}, Detected targets: {len(segments)}, Timecost: {time_used}[ms]")
 
-            # 拼接 原图 & 分割图 ==> combined_image
             h1, w1 = input_image.shape[:2]
             h2, w2 = segmented_image.shape[:2]
             if (h1, w1) != (h2, w2):
                 segmented_image = cv2.resize(segmented_image, (w1, h1))
-                
-            ######################################################## control the top-up fenster
-            # cv2.imshow("Original Image", input_image)
-            # cv2.imshow("Segmented Image", segmented_image)
-            # combined_image = np.hstack((input_image, segmented_image))
-            # cv2.imshow("Original | Segmented", combined_image)
-            # cv2.waitKey(1)
-            # display_with_subplots(segments) # slower, with matplotlib
-            # display_segmented_objects_grid(segments) # faster, with opencv
-            ######################################################## control the top-up fenster
             
 
             ######################################################## 发布分割结果

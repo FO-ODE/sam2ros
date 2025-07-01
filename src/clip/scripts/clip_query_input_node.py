@@ -6,7 +6,7 @@ from std_msgs.msg import String
 
 def main():
     rospy.init_node("clip_query_input_node", anonymous=True)
-    pub = rospy.Publisher("/clip_query", String, queue_size=10)
+    pub = rospy.Publisher("/adv_robocup/sam2clip/clip_query", String, queue_size=10)
     rospy.loginfo("Please enter prompts (input 'exit' to quit):")
 
     while not rospy.is_shutdown():

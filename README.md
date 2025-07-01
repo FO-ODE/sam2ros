@@ -66,7 +66,7 @@ export ROS_IP=10.68.0.131
 
 # WLAN
 export ROS_MASTER_URI=http://192.168.1.200:11311 \
-export ROS_IP=192.168.1.103
+export ROS_IP=192.168.1.84
 ```
 
 ### Connection Test
