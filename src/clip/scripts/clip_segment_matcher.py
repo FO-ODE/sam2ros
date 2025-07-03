@@ -153,7 +153,7 @@ class CLIPSegmentMatcher:
         depth_vis = cv2.normalize(self.depth_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         depth_vis = cv2.cvtColor(depth_vis, cv2.COLOR_GRAY2BGR)
         cv2.rectangle(depth_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        depth_vis[mask == 1] = [0, 255, 0]
+        depth_vis[mask == 255] = [0, 255, 0]
         self.depth_bbox_pub.publish(self.bridge.cv2_to_imgmsg(depth_vis, encoding="bgr8"))
 
         # 相机内参

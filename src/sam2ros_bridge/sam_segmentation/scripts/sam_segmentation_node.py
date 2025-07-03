@@ -19,12 +19,15 @@ def process_with_sam(input_image, model):
     results = model(input_image, verbose=False)[0]
     time_used = round((time.time() - start_time) * 1000)  # ms
     seg_vis = results.plot()
-    masks = results.masks.data.cpu().numpy()
+    masks = results.masks.data.cpu().numpy()  # shape: (N, H, W)
 
     objects = []
     for i, mask in enumerate(masks):
-        binary_mask = (mask * 255).astype(np.uint8)
-        masked_img = cv2.bitwise_and(input_image, input_image, mask=binary_mask)
+        binary_mask = (mask > 0.5).astype(np.uint8)  # 0/1
+        binary_mask_visual = (binary_mask * 255).astype(np.uint8)  # for display/ROS
+
+        # 生成裁剪图像
+        masked_img = cv2.bitwise_and(input_image, input_image, mask=binary_mask_visual)
 
         y_indices, x_indices = np.where(binary_mask > 0)
         if y_indices.size == 0 or x_indices.size == 0:
@@ -35,11 +38,13 @@ def process_with_sam(input_image, model):
 
         objects.append({
             'id': i,
-            'mask': binary_mask,
+            'mask': binary_mask_visual,      # 原图大小的可发布掩码
+            # 'binary': binary_mask,           # 可选：0/1格式
             'crop': cropped
         })
 
     return seg_vis, objects, time_used
+
 
 
 class SamSegmentationNode:
@@ -111,11 +116,18 @@ class SamSegmentationNode:
             for obj in segments:
                 segment_msg = SegmentMask()
                 segment_msg.header = msg.header
+
+                # ✅ 保证是原图大小的掩码
                 segment_msg.mask = self.bridge.cv2_to_imgmsg(obj['mask'], encoding="mono8")
+
+                # ✅ 这是裁剪图像
                 segment_msg.crop = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
+
                 segment_msg.segment_id = obj['id']
                 segment_msg.frame_seq = self.frame_seq
+
                 self.crop_pub.publish(segment_msg)
+
 
         except Exception as e:
             rospy.logerr(f"Error in process_image: {e}")
