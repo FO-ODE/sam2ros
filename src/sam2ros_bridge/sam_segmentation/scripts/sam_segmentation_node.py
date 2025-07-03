@@ -63,6 +63,7 @@ class SamSegmentationNode:
 
         self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback, queue_size=1)
         self.image_pub = rospy.Publisher("/adv_robocup/sam2clip/sam_segment_visual", Image, queue_size=10)
+        self.crop_pub = rospy.Publisher("/adv_robocup/sam2clip/sam_segment_crop", SegmentMask, queue_size=50)
         self.mask_pub = rospy.Publisher("/adv_robocup/sam2clip/sam_segment_mask", SegmentMask, queue_size=50)
         self.orig_image_pub = rospy.Publisher("/adv_robocup/sam2clip/image_raw", Image, queue_size=1)
 
@@ -110,10 +111,11 @@ class SamSegmentationNode:
             for obj in segments:
                 segment_msg = SegmentMask()
                 segment_msg.header = msg.header
-                segment_msg.mask_image = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
+                segment_msg.mask = self.bridge.cv2_to_imgmsg(obj['mask'], encoding="mono8")
+                segment_msg.crop = self.bridge.cv2_to_imgmsg(obj['crop'], "bgr8")
                 segment_msg.segment_id = obj['id']
                 segment_msg.frame_seq = self.frame_seq
-                self.mask_pub.publish(segment_msg)
+                self.crop_pub.publish(segment_msg)
 
         except Exception as e:
             rospy.logerr(f"Error in process_image: {e}")

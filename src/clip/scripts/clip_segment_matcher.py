@@ -29,7 +29,8 @@ class CLIPSegmentMatcher:
         # === ROS ===
         self.bridge = CvBridge()
         self.segment_cache = defaultdict(list)
-        self.image_cache = defaultdict(dict)
+        self.crop_cache = defaultdict(dict)
+        self.mask_cache = defaultdict(dict)
         self.frame_timers = {}
         self.prompt = None
 
@@ -37,9 +38,10 @@ class CLIPSegmentMatcher:
         self.camera_info = None
 
         # === 订阅者 ===
-        rospy.Subscriber("/adv_robocup/sam2clip/sam_segment_mask", SegmentMask, self.segment_callback)
+        rospy.Subscriber("/adv_robocup/sam2clip/sam_segment_crop", SegmentMask, self.segment_callback)
         rospy.Subscriber("/adv_robocup/sam2clip/clip_query", String, self.prompt_callback)
-        rospy.Subscriber("/xtion/depth/image_raw", Image, self.depth_callback)
+        # rospy.Subscriber("/xtion/depth/image_raw", Image, self.depth_callback)
+        rospy.Subscriber("/xtion/depth_registered/image", Image, self.depth_callback)
         rospy.Subscriber("/xtion/depth/camera_info", CameraInfo, self.camera_info_callback)
 
         # === 发布者 ===
@@ -72,21 +74,15 @@ class CLIPSegmentMatcher:
         try:
             frame = msg.frame_seq
             seg_id = msg.segment_id
-            mask_img = self.bridge.imgmsg_to_cv2(msg.mask_image, desired_encoding="passthrough")
-            
-            # 安全处理颜色通道
-            if len(mask_img.shape) == 2:
-                vis_img = cv2.cvtColor(mask_img, cv2.COLOR_GRAY2RGB)
-            elif mask_img.shape[2] == 4:
-                vis_img = cv2.cvtColor(mask_img, cv2.COLOR_BGRA2RGB)
-            elif mask_img.shape[2] == 3:
-                vis_img = cv2.cvtColor(mask_img, cv2.COLOR_BGR2RGB)
-            else:
-                vis_img = mask_img
+            crop_img = self.bridge.imgmsg_to_cv2(msg.crop, desired_encoding="passthrough")
+            self.crop_cache[frame][seg_id] = msg.crop
+
+            full_mask = self.bridge.imgmsg_to_cv2(msg.mask, desired_encoding="mono8")
+            self.mask_cache[frame][seg_id] = full_mask
+            # self.mask_cache[frame][seg_id] = msg.mask  # Store the full mask
 
             # For CLIP matching
-            # vis_img = cv2.cvtColor(mask_img, cv2.COLOR_GRAY2RGB)
-            pil_img = PILImage.fromarray(vis_img)
+            pil_img = PILImage.fromarray(crop_img)
             img_tensor = self.preprocess(pil_img).unsqueeze(0).to(self.device)
 
             with torch.no_grad():
@@ -97,7 +93,7 @@ class CLIPSegmentMatcher:
                 score = similarity.item()
 
             self.segment_cache[frame].append((seg_id, score))
-            self.image_cache[frame][seg_id] = msg.mask_image
+            self.crop_cache[frame][seg_id] = msg.crop
 
             if frame in self.frame_timers:
                 self.frame_timers[frame].shutdown()
@@ -107,33 +103,45 @@ class CLIPSegmentMatcher:
             rospy.logerr(f"segment_callback error: {e}")
 
     def process_frame(self, frame):
+        
+
+        
         if frame not in self.segment_cache or not self.segment_cache[frame]:
             return
 
         best_id, best_score = max(self.segment_cache[frame], key=lambda x: x[1])
         rospy.loginfo(f"[frame {frame}] \"{self.prompt}\" matched ID: {best_id}, score: {best_score:.4f}")
 
-        if best_id not in self.image_cache[frame]:
+        if best_id not in self.crop_cache[frame]:
             rospy.logwarn(f"Segment ID {best_id} not found in image cache.")
             return
 
-        mask_msg = self.image_cache[frame][best_id]
-        self.result_pub.publish(mask_msg)
+        best_match_crop = self.crop_cache[frame][best_id]
+        self.result_pub.publish(best_match_crop)
+        
+                # debugging output for mask
+        mask = self.mask_cache[frame][best_id]
+        rospy.loginfo(f"mask type: {type(mask)}, shape: {getattr(mask, 'shape', None)}, unique: {np.unique(mask) if isinstance(mask, np.ndarray) else 'N/A'}")
 
+
+        # 点云推理部分使用原图大小的掩码
         if self.depth_image is not None and self.camera_info is not None:
-            mask = self.bridge.imgmsg_to_cv2(mask_msg, desired_encoding="passthrough")
-            self.publish_pointcloud_and_position(mask)
+            if best_id in self.mask_cache[frame]:
+                mask = self.mask_cache[frame][best_id]
+                self.publish_pointcloud_and_position(mask)
+            else:
+                rospy.logwarn(f"Mask for best ID {best_id} not found.")
 
         # 清理缓存
         del self.segment_cache[frame]
-        del self.image_cache[frame]
+        del self.crop_cache[frame]
         if frame in self.frame_timers:
             self.frame_timers[frame].shutdown()
             del self.frame_timers[frame]
 
     def publish_pointcloud_and_position(self, mask):
         # 查找边界框
-        ys, xs = np.where(mask == 1)
+        ys, xs = np.where(mask == 255)
         if len(xs) == 0 or len(ys) == 0:
             rospy.logwarn("No non-zero pixels in mask.")
             return
