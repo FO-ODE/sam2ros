@@ -24,10 +24,10 @@ def process_with_sam(input_image, model):
     objects = []
     for i, mask in enumerate(masks):
         binary_mask = (mask > 0.5).astype(np.uint8)  # 0/1
-        binary_mask_visual = (binary_mask * 255).astype(np.uint8)  # for display/ROS
+        # binary_mask_visual = (binary_mask * 255).astype(np.uint8)  # for display/ROS
 
         # 生成裁剪图像
-        masked_img = cv2.bitwise_and(input_image, input_image, mask=binary_mask_visual)
+        masked_img = cv2.bitwise_and(input_image, input_image, mask=binary_mask)
 
         y_indices, x_indices = np.where(binary_mask > 0)
         if y_indices.size == 0 or x_indices.size == 0:
@@ -38,8 +38,7 @@ def process_with_sam(input_image, model):
 
         objects.append({
             'id': i,
-            'mask': binary_mask_visual,      # 原图大小的可发布掩码
-            # 'binary': binary_mask,           # 可选：0/1格式
+            'mask': binary_mask,      # 原图大小的可发布掩码,0/1
             'crop': cropped
         })
 

@@ -42,7 +42,7 @@ class CLIPSegmentMatcher:
         rospy.Subscriber("/adv_robocup/sam2clip/clip_query", String, self.prompt_callback)
         # rospy.Subscriber("/xtion/depth/image_raw", Image, self.depth_callback)
         rospy.Subscriber("/xtion/depth_registered/image", Image, self.depth_callback)
-        rospy.Subscriber("/xtion/depth/camera_info", CameraInfo, self.camera_info_callback)
+        rospy.Subscriber("/xtion/depth_registered/camera_info", CameraInfo, self.camera_info_callback)
 
         # === 发布者 ===
         self.result_pub = rospy.Publisher("/adv_robocup/sam2clip/clip_matched_object", Image, queue_size=10)
@@ -103,9 +103,6 @@ class CLIPSegmentMatcher:
             rospy.logerr(f"segment_callback error: {e}")
 
     def process_frame(self, frame):
-        
-
-        
         if frame not in self.segment_cache or not self.segment_cache[frame]:
             return
 
@@ -140,8 +137,15 @@ class CLIPSegmentMatcher:
             del self.frame_timers[frame]
 
     def publish_pointcloud_and_position(self, mask):
+        # 将 mask 向右移动 10 像素（左边补 0）
+        # offset = 10 for TIAGo
+        shift = 10
+        shifted_mask = np.zeros_like(mask)
+        shifted_mask[:, shift:] = mask[:, :-shift]
+        mask = shifted_mask
+        
         # 查找边界框
-        ys, xs = np.where(mask == 255)
+        ys, xs = np.where(mask == 1)  # 使用二值化掩码查找非零像素
         if len(xs) == 0 or len(ys) == 0:
             rospy.logwarn("No non-zero pixels in mask.")
             return
@@ -152,8 +156,8 @@ class CLIPSegmentMatcher:
         # 可视化 mask 边框
         depth_vis = cv2.normalize(self.depth_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         depth_vis = cv2.cvtColor(depth_vis, cv2.COLOR_GRAY2BGR)
-        cv2.rectangle(depth_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        depth_vis[mask == 255] = [0, 255, 0]
+        cv2.rectangle(depth_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)  # 红色边框
+        depth_vis[mask == 1] = [0, 255, 0] # 将掩码区域标记为绿色
         self.depth_bbox_pub.publish(self.bridge.cv2_to_imgmsg(depth_vis, encoding="bgr8"))
 
         # 相机内参
