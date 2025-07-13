@@ -48,7 +48,7 @@ class CLIPSegmentMatcher:
         self.result_pub = rospy.Publisher("/adv_robocup/sam2clip/clip_matched_object", Image, queue_size=10)
         self.depth_bbox_pub = rospy.Publisher("/adv_robocup/sam2clip/depth_bbox", Image, queue_size=1)
         self.pointcloud_pub = rospy.Publisher("/adv_robocup/sam2clip/pointcloud", PointCloud2, queue_size=1)
-        self.position_pub = rospy.Publisher("/adv_robocup/waving_person/position", PointStamped, queue_size=1)
+        self.position_pub = rospy.Publisher("/adv_robocup/object_position", PointStamped, queue_size=1)
 
         rospy.loginfo("CLIP Segment Matcher Initialized")
         rospy.logwarn("Please send prompts to /adv_robocup/sam2clip/clip_query")
