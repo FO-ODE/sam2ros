@@ -1,18 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-YOLO Detection Node for ROS
-============================
-
-该节点使用YOLO模型进行目标检测、图像分割和姿态估计，专门用于检测挥手手势。
-主要功能：
-- 目标检测和跟踪
-- 图像分割
-- 姿态估计和手势识别
-- 深度图像处理和点云生成
-- 发布检测结果和控制指令
-
-"""
-
 import os
 import time
 import ros_numpy
@@ -136,7 +122,7 @@ class YoloDetectionNode:
             "/ultralytics/pose/selected_person/pointcloud", PointCloud2, queue_size=1
         )
         self.position_pub = rospy.Publisher(
-            "/adv_robocup/waving_person/position", PointStamped, queue_size=1
+            "/adv_robocup/waving_person/position", PointStamped, queue_size=10
         )
         
         # 控制指令发布者
@@ -485,7 +471,7 @@ class YoloDetectionNode:
         # 处理检测到的对象
         if len(det_result[0].boxes) > 0:
             self._publish_detection_classes(det_result[0])
-            self._publish_person_crops(det_result[0], input_image)
+            # self._publish_person_crops(det_result[0], input_image)
     
     def _publish_detection_classes(self, result):
         """发布检测到的类别信息"""
